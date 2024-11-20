@@ -12,7 +12,6 @@ final class HealthDataProcessor : ObservableObject {
     private let authManager: AuthenticationManager
 
     
-    // Add a published property to store the latest bandwidth score
     @Published private(set) var currentBandwidthScore: Double = 0
     @Published private(set) var isCalculating = false
     @Published private(set) var lastError: String?
@@ -352,7 +351,7 @@ final class HealthDataProcessor : ObservableObject {
     }
     
     private func fetchMetricValues(for metric: HealthMetric, days: Int) async -> [Double] {
-        // Define a sendable tuple type
+
         struct MetricResult: Sendable {
             let value: Double
             let isValid: Bool

@@ -105,7 +105,6 @@ private struct SmallBatteryFill: View {
     }
 }
 
-// Add this at the bottom of your file
 #Preview("Battery States") {
     VStack(spacing: 20) {
         // Full Battery

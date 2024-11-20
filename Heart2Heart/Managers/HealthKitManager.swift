@@ -72,7 +72,7 @@ struct SleepMetrics: StorableMetric {
     
     // Instead of switch case, just return a fixed key since this is a struct
     var firestoreKey: String {
-        return "sleepMetrics"  // or whatever key you want to use in Firestore
+        return "sleepMetrics"
     }
     
     var isComputedMetric: Bool { false }
@@ -95,7 +95,6 @@ class HealthKitManager {
             authManager.user?.uid
         }
     
-    // Add this method to check authorization status
     func checkAuthorizationStatus() async -> Bool {
         for type in healthTypes {
             let status = healthStore.authorizationStatus(for: type)
@@ -106,7 +105,6 @@ class HealthKitManager {
         return true
     }
     
-    // Modify the existing requestAuthorization method
     func requestAuthorization() async throws -> Bool {
         // Check if HealthKit is available on this device
         guard HKHealthStore.isHealthDataAvailable() else {

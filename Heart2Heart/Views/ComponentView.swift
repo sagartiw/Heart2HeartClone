@@ -188,7 +188,6 @@ struct ComponentView: View {
         }
     }
 
-    // Add this new function to load names
         private func loadNames() async {
             guard let currentUserId = authManager.user?.uid else { return }
             

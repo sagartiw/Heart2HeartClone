@@ -17,7 +17,6 @@ class SettingsManager: ObservableObject {
             var elevatedHeartRateThreshold = 75.0
             var averagingPeriodDays: Int = 30
             
-            // Implement custom Equatable conformance if needed
             static func == (lhs: Settings, rhs: Settings) -> Bool {
                 return lhs.isSleepEnabled == rhs.isSleepEnabled &&
                        lhs.isExerciseEnabled == rhs.isExerciseEnabled &&

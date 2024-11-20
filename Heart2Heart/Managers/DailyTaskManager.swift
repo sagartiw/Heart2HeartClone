@@ -26,11 +26,9 @@ class DailyTaskManager: ObservableObject {
     }
     
     func handleDailyUpdate(_ data: [String: Any]) {
-        // Handle the daily update here
         // This will be called whenever the Cloud Function executes
         print("Received daily update: \(data)")
         
-        // Perform any local app updates needed
     }
     
     deinit {

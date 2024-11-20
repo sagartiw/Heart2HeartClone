@@ -53,7 +53,6 @@ struct CalendarView: View {
                     Spacer()
                     
                     //Metric Picker
-                    // Replace your current Picker with this Menu
                     Menu {
                         ForEach([
                             DisplayMetric.healthMetric(.restingHeartRate),
