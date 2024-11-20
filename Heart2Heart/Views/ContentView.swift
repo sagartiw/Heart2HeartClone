@@ -1,5 +1,4 @@
 // Views/ContentView.swift
-// Views/ContentView.swift
 import SwiftUI
 
 enum DisplayMetric: Hashable {

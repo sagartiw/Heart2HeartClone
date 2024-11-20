@@ -7,17 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		C5D01CC82CEE52E5001D53E8 /* Heart2HeartApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5D01CC72CEE52E5001D53E8 /* Heart2HeartApp.swift */; };
+		C5D01CC82CEE52E5001D53E8 /* Heart2Heart.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5D01CC72CEE52E5001D53E8 /* Heart2Heart.swift */; };
 		C5D01CCC2CEE52E7001D53E8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C5D01CCB2CEE52E7001D53E8 /* Assets.xcassets */; };
 		C5D01CCF2CEE52E7001D53E8 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C5D01CCE2CEE52E7001D53E8 /* Preview Assets.xcassets */; };
 		C5D01CD12CEE52E7001D53E8 /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5D01CD02CEE52E7001D53E8 /* Persistence.swift */; };
 		C5D01CD42CEE52E7001D53E8 /* Heart2Heart.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = C5D01CD22CEE52E7001D53E8 /* Heart2Heart.xcdatamodeld */; };
-		C5D01CDC2CEE5336001D53E8 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = C5D01CDB2CEE5336001D53E8 /* FirebaseAuth */; };
-		C5D01CDE2CEE5336001D53E8 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = C5D01CDD2CEE5336001D53E8 /* FirebaseCore */; };
-		C5D01CE02CEE5336001D53E8 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = C5D01CDF2CEE5336001D53E8 /* FirebaseFirestore */; };
-		C5D01CE22CEE5336001D53E8 /* FirebaseFunctions in Frameworks */ = {isa = PBXBuildFile; productRef = C5D01CE12CEE5336001D53E8 /* FirebaseFunctions */; };
-		C5D01CE42CEE5336001D53E8 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = C5D01CE32CEE5336001D53E8 /* FirebaseMessaging */; };
-		C5D01CE62CEE5336001D53E8 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = C5D01CE52CEE5336001D53E8 /* FirebaseStorage */; };
 		C5D01CFE2CEE535F001D53E8 /* BatteryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5D01CE72CEE535F001D53E8 /* BatteryView.swift */; };
 		C5D01CFF2CEE535F001D53E8 /* CalendarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5D01CE82CEE535F001D53E8 /* CalendarView.swift */; };
 		C5D01D002CEE535F001D53E8 /* ComponentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5D01CE92CEE535F001D53E8 /* ComponentView.swift */; };
@@ -33,7 +27,6 @@
 		C5D01D0A2CEE535F001D53E8 /* SmallBatteryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5D01CF32CEE535F001D53E8 /* SmallBatteryView.swift */; };
 		C5D01D0B2CEE535F001D53E8 /* TestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5D01CF42CEE535F001D53E8 /* TestView.swift */; };
 		C5D01D0C2CEE535F001D53E8 /* AuthenticationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5D01CF62CEE535F001D53E8 /* AuthenticationManager.swift */; };
-		C5D01D0D2CEE535F001D53E8 /* BackgroundTaskManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5D01CF72CEE535F001D53E8 /* BackgroundTaskManager.swift */; };
 		C5D01D0E2CEE535F001D53E8 /* DailyTaskManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5D01CF82CEE535F001D53E8 /* DailyTaskManager.swift */; };
 		C5D01D0F2CEE535F001D53E8 /* FirestoreManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5D01CF92CEE535F001D53E8 /* FirestoreManager.swift */; };
 		C5D01D102CEE535F001D53E8 /* HealthDataProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5D01CFA2CEE535F001D53E8 /* HealthDataProcessor.swift */; };
@@ -42,11 +35,17 @@
 		C5D01D142CEE53B2001D53E8 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = C5D01D132CEE53B2001D53E8 /* GoogleService-Info.plist */; };
 		C5D01D1A2CEE5532001D53E8 /* KulimPark-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C5D01D172CEE5532001D53E8 /* KulimPark-Regular.ttf */; };
 		C5D01D1B2CEE5532001D53E8 /* KulimPark-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C5D01D182CEE5532001D53E8 /* KulimPark-SemiBold.ttf */; };
+		C5D0D6992CEE7C76001D53E8 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = C5D0D6982CEE7C76001D53E8 /* FirebaseAuth */; };
+		C5D0D69B2CEE7C76001D53E8 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = C5D0D69A2CEE7C76001D53E8 /* FirebaseCore */; };
+		C5D0D69D2CEE7C76001D53E8 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = C5D0D69C2CEE7C76001D53E8 /* FirebaseFirestore */; };
+		C5D0D69F2CEE7C76001D53E8 /* FirebaseFunctions in Frameworks */ = {isa = PBXBuildFile; productRef = C5D0D69E2CEE7C76001D53E8 /* FirebaseFunctions */; };
+		C5D0D6A12CEE8838001D53E8 /* TimeZoneManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5D0D6A02CEE8838001D53E8 /* TimeZoneManager.swift */; };
+		C5D0D6A32CEE93EC001D53E8 /* AlertManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5D0D6A22CEE93EC001D53E8 /* AlertManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		C5D01CC42CEE52E5001D53E8 /* Heart2Heart.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Heart2Heart.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		C5D01CC72CEE52E5001D53E8 /* Heart2HeartApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Heart2HeartApp.swift; sourceTree = "<group>"; };
+		C5D01CC72CEE52E5001D53E8 /* Heart2Heart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Heart2Heart.swift; sourceTree = "<group>"; };
 		C5D01CCB2CEE52E7001D53E8 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C5D01CCE2CEE52E7001D53E8 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		C5D01CD02CEE52E7001D53E8 /* Persistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence.swift; sourceTree = "<group>"; };
@@ -66,7 +65,6 @@
 		C5D01CF32CEE535F001D53E8 /* SmallBatteryView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SmallBatteryView.swift; sourceTree = "<group>"; };
 		C5D01CF42CEE535F001D53E8 /* TestView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TestView.swift; sourceTree = "<group>"; };
 		C5D01CF62CEE535F001D53E8 /* AuthenticationManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AuthenticationManager.swift; sourceTree = "<group>"; };
-		C5D01CF72CEE535F001D53E8 /* BackgroundTaskManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BackgroundTaskManager.swift; sourceTree = "<group>"; };
 		C5D01CF82CEE535F001D53E8 /* DailyTaskManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DailyTaskManager.swift; sourceTree = "<group>"; };
 		C5D01CF92CEE535F001D53E8 /* FirestoreManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FirestoreManager.swift; sourceTree = "<group>"; };
 		C5D01CFA2CEE535F001D53E8 /* HealthDataProcessor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HealthDataProcessor.swift; sourceTree = "<group>"; };
@@ -77,6 +75,8 @@
 		C5D01D182CEE5532001D53E8 /* KulimPark-SemiBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "KulimPark-SemiBold.ttf"; sourceTree = "<group>"; };
 		C5D01D1C2CEE5595001D53E8 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		C5D01D1D2CEE5782001D53E8 /* Heart2Heart.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Heart2Heart.entitlements; sourceTree = "<group>"; };
+		C5D0D6A02CEE8838001D53E8 /* TimeZoneManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeZoneManager.swift; sourceTree = "<group>"; };
+		C5D0D6A22CEE93EC001D53E8 /* AlertManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -84,12 +84,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C5D01CDE2CEE5336001D53E8 /* FirebaseCore in Frameworks */,
-				C5D01CDC2CEE5336001D53E8 /* FirebaseAuth in Frameworks */,
-				C5D01CE42CEE5336001D53E8 /* FirebaseMessaging in Frameworks */,
-				C5D01CE02CEE5336001D53E8 /* FirebaseFirestore in Frameworks */,
-				C5D01CE22CEE5336001D53E8 /* FirebaseFunctions in Frameworks */,
-				C5D01CE62CEE5336001D53E8 /* FirebaseStorage in Frameworks */,
+				C5D0D69B2CEE7C76001D53E8 /* FirebaseCore in Frameworks */,
+				C5D0D6992CEE7C76001D53E8 /* FirebaseAuth in Frameworks */,
+				C5D0D69D2CEE7C76001D53E8 /* FirebaseFirestore in Frameworks */,
+				C5D0D69F2CEE7C76001D53E8 /* FirebaseFunctions in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -119,7 +117,7 @@
 				C5D01D1D2CEE5782001D53E8 /* Heart2Heart.entitlements */,
 				C5D01D1C2CEE5595001D53E8 /* Info.plist */,
 				C5D01D192CEE5532001D53E8 /* Assets */,
-				C5D01CC72CEE52E5001D53E8 /* Heart2HeartApp.swift */,
+				C5D01CC72CEE52E5001D53E8 /* Heart2Heart.swift */,
 				C5D01CFD2CEE535F001D53E8 /* Managers */,
 				C5D01CF52CEE535F001D53E8 /* Views */,
 				C5D01CCB2CEE52E7001D53E8 /* Assets.xcassets */,
@@ -163,12 +161,13 @@
 			isa = PBXGroup;
 			children = (
 				C5D01CF62CEE535F001D53E8 /* AuthenticationManager.swift */,
-				C5D01CF72CEE535F001D53E8 /* BackgroundTaskManager.swift */,
 				C5D01CF82CEE535F001D53E8 /* DailyTaskManager.swift */,
 				C5D01CF92CEE535F001D53E8 /* FirestoreManager.swift */,
 				C5D01CFA2CEE535F001D53E8 /* HealthDataProcessor.swift */,
 				C5D01CFB2CEE535F001D53E8 /* HealthKitManager.swift */,
 				C5D01CFC2CEE535F001D53E8 /* SettingsManager.swift */,
+				C5D0D6A02CEE8838001D53E8 /* TimeZoneManager.swift */,
+				C5D0D6A22CEE93EC001D53E8 /* AlertManager.swift */,
 			);
 			path = Managers;
 			sourceTree = "<group>";
@@ -199,12 +198,10 @@
 			);
 			name = Heart2Heart;
 			packageProductDependencies = (
-				C5D01CDB2CEE5336001D53E8 /* FirebaseAuth */,
-				C5D01CDD2CEE5336001D53E8 /* FirebaseCore */,
-				C5D01CDF2CEE5336001D53E8 /* FirebaseFirestore */,
-				C5D01CE12CEE5336001D53E8 /* FirebaseFunctions */,
-				C5D01CE32CEE5336001D53E8 /* FirebaseMessaging */,
-				C5D01CE52CEE5336001D53E8 /* FirebaseStorage */,
+				C5D0D6982CEE7C76001D53E8 /* FirebaseAuth */,
+				C5D0D69A2CEE7C76001D53E8 /* FirebaseCore */,
+				C5D0D69C2CEE7C76001D53E8 /* FirebaseFirestore */,
+				C5D0D69E2CEE7C76001D53E8 /* FirebaseFunctions */,
 			);
 			productName = Heart2Heart;
 			productReference = C5D01CC42CEE52E5001D53E8 /* Heart2Heart.app */;
@@ -235,7 +232,7 @@
 			);
 			mainGroup = C5D01CBB2CEE52E5001D53E8;
 			packageReferences = (
-				C5D01CDA2CEE5336001D53E8 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				C5D0D6972CEE7C76001D53E8 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 			);
 			productRefGroup = C5D01CC52CEE52E5001D53E8 /* Products */;
 			projectDirPath = "";
@@ -266,13 +263,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C5D01D0D2CEE535F001D53E8 /* BackgroundTaskManager.swift in Sources */,
 				C5D01D082CEE535F001D53E8 /* SettingsView.swift in Sources */,
 				C5D01D112CEE535F001D53E8 /* HealthKitManager.swift in Sources */,
 				C5D01D022CEE535F001D53E8 /* HomeView.swift in Sources */,
 				C5D01CD12CEE52E7001D53E8 /* Persistence.swift in Sources */,
 				C5D01CFE2CEE535F001D53E8 /* BatteryView.swift in Sources */,
 				C5D01D0C2CEE535F001D53E8 /* AuthenticationManager.swift in Sources */,
+				C5D0D6A12CEE8838001D53E8 /* TimeZoneManager.swift in Sources */,
 				C5D01D012CEE535F001D53E8 /* ContentView.swift in Sources */,
 				C5D01D102CEE535F001D53E8 /* HealthDataProcessor.swift in Sources */,
 				C5D01D032CEE535F001D53E8 /* InvitationCodeView.swift in Sources */,
@@ -283,9 +280,10 @@
 				C5D01D042CEE535F001D53E8 /* LoginView.swift in Sources */,
 				C5D01D052CEE535F001D53E8 /* OnboardingView.swift in Sources */,
 				C5D01CD42CEE52E7001D53E8 /* Heart2Heart.xcdatamodeld in Sources */,
+				C5D0D6A32CEE93EC001D53E8 /* AlertManager.swift in Sources */,
 				C5D01D092CEE535F001D53E8 /* SignupView.swift in Sources */,
 				C5D01D072CEE535F001D53E8 /* ScoreView.swift in Sources */,
-				C5D01CC82CEE52E5001D53E8 /* Heart2HeartApp.swift in Sources */,
+				C5D01CC82CEE52E5001D53E8 /* Heart2Heart.swift in Sources */,
 				C5D01D122CEE535F001D53E8 /* SettingsManager.swift in Sources */,
 				C5D01D0A2CEE535F001D53E8 /* SmallBatteryView.swift in Sources */,
 				C5D01D062CEE535F001D53E8 /* PartnerInvitationView.swift in Sources */,
@@ -509,7 +507,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		C5D01CDA2CEE5336001D53E8 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+		C5D0D6972CEE7C76001D53E8 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/firebase/firebase-ios-sdk.git";
 			requirement = {
@@ -520,35 +518,25 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		C5D01CDB2CEE5336001D53E8 /* FirebaseAuth */ = {
+		C5D0D6982CEE7C76001D53E8 /* FirebaseAuth */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = C5D01CDA2CEE5336001D53E8 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			package = C5D0D6972CEE7C76001D53E8 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseAuth;
 		};
-		C5D01CDD2CEE5336001D53E8 /* FirebaseCore */ = {
+		C5D0D69A2CEE7C76001D53E8 /* FirebaseCore */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = C5D01CDA2CEE5336001D53E8 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			package = C5D0D6972CEE7C76001D53E8 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseCore;
 		};
-		C5D01CDF2CEE5336001D53E8 /* FirebaseFirestore */ = {
+		C5D0D69C2CEE7C76001D53E8 /* FirebaseFirestore */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = C5D01CDA2CEE5336001D53E8 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			package = C5D0D6972CEE7C76001D53E8 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseFirestore;
 		};
-		C5D01CE12CEE5336001D53E8 /* FirebaseFunctions */ = {
+		C5D0D69E2CEE7C76001D53E8 /* FirebaseFunctions */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = C5D01CDA2CEE5336001D53E8 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			package = C5D0D6972CEE7C76001D53E8 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseFunctions;
-		};
-		C5D01CE32CEE5336001D53E8 /* FirebaseMessaging */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = C5D01CDA2CEE5336001D53E8 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseMessaging;
-		};
-		C5D01CE52CEE5336001D53E8 /* FirebaseStorage */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = C5D01CDA2CEE5336001D53E8 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseStorage;
 		};
 /* End XCSwiftPackageProductDependency section */
 

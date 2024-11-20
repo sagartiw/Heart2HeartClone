@@ -13,13 +13,12 @@ enum FirestoreError: Error {
 class FirestoreManager {
     private let db = Firestore.firestore()
     
-    
     private let dateFormatter: DateFormatter = {
-            let formatter = DateFormatter()
-            formatter.dateFormat = "yyyy-MM-dd"
-            formatter.timeZone = TimeZone.current
-            return formatter
-        }()
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.timeZone = TimeZone.current
+        return formatter
+    }()
     
     func getUserData(userId: String) async throws -> (partnerId: String?, name: String?) {
         guard !userId.isEmpty else {
@@ -31,124 +30,87 @@ class FirestoreManager {
             .getDocument()
         
         let data = document.data()
-        let partnerId = data?["pairedWith"] as? String
-        let name = data?["name"] as? String
-        
-        return (partnerId, name)
+        return (data?["pairedWith"] as? String, data?["name"] as? String)
     }
-    func getComputedData(userId: String, metric: ComputedMetric, date: Date) async throws -> Double? {
-            do {
-                let dateString = dateFormatter.string(from: date)
-                let docRef = db.collection("users")
-                    .document(userId)
-                    .collection("computedData")
-                    .document(dateString)
-                
-                let document = try await docRef.getDocument()
-                if document.exists,
-                   let data = document.data(),
-                   let metricData = data[metric.firestoreKey] as? Double {
-                    return metricData
-                }
-                return nil
-            } catch {
-                throw FirestoreError.unknown(error)
-            }
-        }
-        
-        func storeComputedData(userId: String, metric: ComputedMetric, date: Date, value: Double) async throws {
-            do {
-                let dateString = dateFormatter.string(from: date)
-                let docRef = db.collection("users")
-                    .document(userId)
-                    .collection("computedData")
-                    .document(dateString)
-                
-                try await docRef.setData([
-                    metric.firestoreKey: value,
-                    "timestamp": FieldValue.serverTimestamp()
-                ], merge: true)
-            } catch {
-                throw FirestoreError.unknown(error)
-            }
-        }
     
+    // Generic method to get data for any metric type
+    private func getData<T: StorableMetric>(userId: String, metric: T, date: Date, collection: String) async throws -> Double? {
+        let dateString = dateFormatter.string(from: date)
+        let docRef = db.collection("users")
+            .document(userId)
+            .collection(collection)
+            .document(dateString)
+        
+        let document = try await docRef.getDocument()
+        return document.exists ? document.data()?[metric.firestoreKey] as? Double : nil
+    }
+    
+    // Generic method to store data for any metric type
+    private func storeData<T: StorableMetric>(userId: String, metric: T, date: Date, value: Double, collection: String) async throws {
+        let dateString = dateFormatter.string(from: date)
+        let docRef = db.collection("users")
+            .document(userId)
+            .collection(collection)
+            .document(dateString)
+        
+        try await docRef.setData([
+            metric.firestoreKey: value,
+            "timestamp": FieldValue.serverTimestamp()
+        ], merge: true)
+    }
+    
+    // Public methods using the generic helpers
     func getHealthData(userId: String, metric: HealthMetric, date: Date) async throws -> Double? {
-            do {
-                let dateString = dateFormatter.string(from: date)
-                let docRef = db.collection("users")
-                    .document(userId)
-                    .collection("healthData")
-                    .document(dateString)
-                
-                let document = try await docRef.getDocument()
-                if document.exists,
-                   let data = document.data(),
-                   let metricData = data[metric.firestoreKey] as? Double {
-                    return metricData
-                }
-                return nil
-            } catch {
-                throw FirestoreError.unknown(error)
-            }
-        }
-        
-        func storeHealthData(userId: String, metric: HealthMetric, date: Date, value: Double) async throws {
-            do {
-                let dateString = dateFormatter.string(from: date)
-                let docRef = db.collection("users")
-                    .document(userId)
-                    .collection("healthData")
-                    .document(dateString)
-                
-                try await docRef.setData([
-                    metric.firestoreKey: value,
-                    "timestamp": FieldValue.serverTimestamp()
-                ], merge: true)
-            } catch {
-                throw FirestoreError.unknown(error)
-            }
-        }
+        try await getData(userId: userId, metric: metric, date: date, collection: "healthData")
+    }
     
-    func getComputedData(userId: String, metric: HealthMetric, date: Date) async throws -> Double? {
-            do {
-                let dateString = dateFormatter.string(from: date)
-                let docRef = db.collection("users")
-                    .document(userId)
-                    .collection("computedData")
-                    .document(dateString)
-                
-                let document = try await docRef.getDocument()
-                if document.exists,
-                   let data = document.data(),
-                   let metricData = data[metric.firestoreKey] as? Double {
-                    return metricData
-                }
-                return nil
-            } catch {
-                throw FirestoreError.unknown(error)
-            }
-        }
-        
-        func storeComputedData(userId: String, metric: HealthMetric, date: Date, value: Double) async throws {
-            do {
-                let dateString = dateFormatter.string(from: date)
-                let docRef = db.collection("users")
-                    .document(userId)
-                    .collection("computedData")
-                    .document(dateString)
-                
-                try await docRef.setData([
-                    metric.firestoreKey: value,
-                    "timestamp": FieldValue.serverTimestamp()
-                ], merge: true)
-            } catch {
-                throw FirestoreError.unknown(error)
-            }
-        }
+    func storeHealthData(userId: String, metric: HealthMetric, date: Date, value: Double) async throws {
+        try await storeData(userId: userId, metric: metric, date: date, value: value, collection: "healthData")
+    }
     
+    func getComputedData(userId: String, metric: ComputedMetric, date: Date) async throws -> Double? {
+        try await getData(userId: userId, metric: metric, date: date, collection: "computedData")
+    }
+    
+    func storeComputedData(userId: String, metric: ComputedMetric, date: Date, value: Double) async throws {
+        try await storeData(userId: userId, metric: metric, date: date, value: value, collection: "computedData")
+    }
+    
+    // Sleep metrics methods
+    func storeSleepMetrics(userId: String, date: Date, metrics: SleepMetrics) async throws {
+        let dateString = dateFormatter.string(from: date)
+        let docRef = db.collection("users")
+            .document(userId)
+            .collection("healthData")
+            .document(dateString)
+        
+        try await docRef.setData([
+            "sleepTime": metrics.sleepTime,
+            "timestamp": FieldValue.serverTimestamp()
+        ], merge: true)
+    }
+    
+    func getSleepMetrics(userId: String, date: Date) async throws -> SleepMetrics? {
+        let dateString = dateFormatter.string(from: date)
+        let docRef = db.collection("users")
+            .document(userId)
+            .collection("healthData")
+            .document(dateString)
+        
+        let document = try await docRef.getDocument()
+        guard let sleepTime = document.data()?["sleepTime"] as? TimeInterval else { return nil }
+        return SleepMetrics(sleepTime: sleepTime, inBedTime: 0)
+    }
+    
+        func getUserTimezone(userId: String) async throws -> String? {
+            let document = try await db.collection("users")
+                .document(userId)
+                .getDocument()
+            
+            return document.data()?["timezone"] as? String
+        
+    }
 }
-
 protocol StorableMetric {
     var firestoreKey: String { get }
     var isComputedMetric: Bool { get }
@@ -160,6 +122,7 @@ enum ComputedMetric: String, StorableMetric {
     case heartRateComponent
     case exerciseComponent
     case sleepComponent
+    case elevatedHeartRateTime
     
     var firestoreKey: String {
         rawValue
@@ -185,8 +148,6 @@ extension HealthMetric {
             return "activeEnergy"
         case .exerciseTime:
             return "exerciseMinutes"
-        case .elevatedHeartRateTime:
-            return "elevatedHeartRateTime"
         default:
             return ""
         }
@@ -209,46 +170,6 @@ extension HealthMetric {
             return true
         default:
             return false
-        }
-    }
-}
-
-extension FirestoreManager {
-    func storeSleepMetrics(userId: String, date: Date, metrics: SleepMetrics) async throws {
-        do {
-            let dateString = dateFormatter.string(from: date)
-            let docRef = db.collection("users")
-                .document(userId)
-                .collection("healthData")
-                .document(dateString)
-            
-            try await docRef.setData([
-                "sleepTime": metrics.sleepTime,
-                "timestamp": FieldValue.serverTimestamp()
-            ], merge: true)
-        } catch {
-            throw FirestoreError.unknown(error)
-        }
-    }
-    
-    func getSleepMetrics(userId: String, date: Date) async throws -> SleepMetrics? {
-        do {
-            let dateString = dateFormatter.string(from: date)
-            let docRef = db.collection("users")
-                .document(userId)
-                .collection("healthData")
-                .document(dateString)
-            
-            let document = try await docRef.getDocument()
-            if document.exists,
-               let data = document.data(),
-               let sleepTime = data["sleepTime"] as? TimeInterval {
-                // Return SleepMetrics with 0 for inBedTime since we're not caching it
-                return SleepMetrics(sleepTime: sleepTime, inBedTime: 0)
-            }
-            return nil
-        } catch {
-            throw FirestoreError.unknown(error)
         }
     }
 }

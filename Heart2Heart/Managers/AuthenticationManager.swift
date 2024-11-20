@@ -33,6 +33,9 @@ class AuthenticationManager: ObservableObject {
         changeRequest.displayName = name
         try await changeRequest.commitChanges()
         
+        // Get current timezone identifier
+        let timezone = TimeZone.current.identifier
+        
         try await db.collection("users").document(result.user.uid).setData([
             "email": email,
             "name": name,

@@ -1,6 +1,8 @@
 //Heart2Heart.swift
 import SwiftUI
 import Firebase
+import UserNotifications
+
 
 @main
 struct Heart2Heart: App {
@@ -11,6 +13,7 @@ struct Heart2Heart: App {
     
     init() {
         FirebaseApp.configure()
+        
         
         let auth = AuthenticationManager()
         let settings = SettingsManager()
@@ -24,11 +27,27 @@ struct Heart2Heart: App {
         )
         _healthDataProcessor = StateObject(wrappedValue: health)
         
-        // Initialize DailyTaskManager with healthDataProcessor
-        let dailyTask = DailyTaskManager(healthDataProcessor: health)
+        let dailyTask = DailyTaskManager(
+            healthDataProcessor: health,
+            settingsManager: settings
+        )
+
         _dailyTaskManager = StateObject(wrappedValue: dailyTask)
         
         configureUIAppearance()
+        
+        requestNotificationPermissions()
+
+    }
+    
+    private func requestNotificationPermissions() {
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
+            if granted {
+                print("Notification permission granted")
+            } else if let error = error {
+                print("Error requesting notification permissions: \(error.localizedDescription)")
+            }
+        }
     }
     
     var body: some Scene {
@@ -41,8 +60,12 @@ struct Heart2Heart: App {
                 .task {
                     await initializeHealthKit()
                 }
-                .onAppear {
-                    dailyTaskManager.startListening()
+                .onChange(of: authManager.isAuthenticated) { isAuthenticated in
+                    if isAuthenticated {
+                        dailyTaskManager.startListening()
+                    } else {
+                        dailyTaskManager.stopListening()
+                    }
                 }
         }
     }
