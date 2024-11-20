@@ -5,6 +5,7 @@ import Firebase
 
 class DailyTaskManager: ObservableObject {
     @Published var lastUpdate: Date?
+    @EnvironmentObject var healthDataProcessor: HealthDataProcessor
     private var listener: ListenerRegistration?
     
     func startListening() {
@@ -21,14 +22,22 @@ class DailyTaskManager: ObservableObject {
                 }
                 
                 self.lastUpdate = timestamp.dateValue()
-                self.handleDailyUpdate(document.data())
+                Task {
+                    await self.processDailyUpdate()
+                }
             }
     }
     
-    func handleDailyUpdate(_ data: [String: Any]) {
-        // This will be called whenever the Cloud Function executes
-        print("Received daily update: \(data)")
+    private func processDailyUpdate() async {
+        guard let healthDataProcessor = healthDataProcessor else { return }
         
+        do {
+            try await healthDataProcessor.initialize()
+            let today = Calendar.current.startOfDay(for: Date())
+            _ = try await healthDataProcessor.calculateBandwidthScore(for: today)
+        } catch {
+            print("Error processing daily update: \(error)")
+        }
     }
     
     deinit {
