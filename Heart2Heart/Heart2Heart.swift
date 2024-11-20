@@ -7,29 +7,27 @@ struct Heart2Heart: App {
     @StateObject private var authManager: AuthenticationManager
     @StateObject private var settingsManager: SettingsManager
     @StateObject private var healthDataProcessor: HealthDataProcessor
-    @StateObject private var dailyTaskManager = DailyTaskManager()
-
+    @StateObject private var dailyTaskManager: DailyTaskManager
     
     init() {
-        // Configure Firebase first
         FirebaseApp.configure()
         
-        // Create the base managers
         let auth = AuthenticationManager()
         let settings = SettingsManager()
         
-        // Initialize StateObjects
         _authManager = StateObject(wrappedValue: auth)
         _settingsManager = StateObject(wrappedValue: settings)
         
-        // Create health processor with the managers
         let health = HealthDataProcessor(
             settingsManager: settings,
             authManager: auth
         )
         _healthDataProcessor = StateObject(wrappedValue: health)
         
-        // Configure UI
+        // Initialize DailyTaskManager with healthDataProcessor
+        let dailyTask = DailyTaskManager(healthDataProcessor: health)
+        _dailyTaskManager = StateObject(wrappedValue: dailyTask)
+        
         configureUIAppearance()
     }
     
