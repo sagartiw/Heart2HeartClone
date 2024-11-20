@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.Heart2Heart.dailyCheck</string>
+	</array>
+	<key>Permitted background task scheduler identifiers</key>
+	<array>
+		<string>com.Heart2Heart.dailyCheck</string>
+	</array>
+	<key>UIAppFonts</key>
+	<array>
+		<string>KulimPark-SemiBold.ttf</string>
+	</array>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>processing</string>
+	</array>
+</dict>
+</plist>
