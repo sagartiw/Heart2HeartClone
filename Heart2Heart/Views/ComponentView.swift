@@ -37,157 +37,177 @@ struct ComponentView: View {
     @State private var partnerName: String = ""
         
     var body: some View {
-        ZStack {
+        NavigationView {
+            ZStack {
                 Color(red: 0.141, green: 0.141, blue: 0.141)
                     .ignoresSafeArea()
-            VStack(spacing: 5) {
-                Menu {
-                            ForEach([
-                                DisplayMetric.healthMetric(.restingHeartRate),
-                                DisplayMetric.healthMetric(.steps),
-                                DisplayMetric.healthMetric(.activeEnergy),
-                                DisplayMetric.healthMetric(.heartRateVariability),
-                                DisplayMetric.healthMetric(.exerciseTime),
-                                DisplayMetric.healthMetric(.elevatedHeartRateTime),
-                                DisplayMetric.bandwidthScore
-                            ], id: \.self) { metric in
-                                Button {
-                                    selectedMetric = metric
-                                } label: {
-                                    Text(metric.displayName)
-                                        .font(.custom("KulimPark-SemiBold", size: 16))
-                                }
-                            }
-                        } label: {
-                            HStack {
-                                Text(selectedMetric.displayName)
-                                    .font(.custom("KulimPark-SemiBold", size: 16))
-                                    .foregroundColor(.white)
-                                Image(systemName: "chevron.down")
-                                    .font(.custom("KulimPark-SemiBold", size: 12))
-                                    .foregroundColor(.white)
-                            }
-                        }
-                        .padding(.horizontal)
-                
-                // User section
-                Text(userName)
-                    .font(.headline)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.leading)
-                
-                HStack(spacing: 50) {
-                    // Today Battery
-                    VStack(spacing: 0) {
-                        SmallBatteryView(
-                            value: userCurrentScore,
-                            minValue: userMinScore,
-                            maxValue: userMaxScore,
-                            isInverted: false,
-                            isEmpty: false,
-                            isGray: false
-                        )
-                        .frame(height: 250)  // Reduced height
-                        .padding(.bottom, 2)  // Add small padding between battery and text
-                        
-                        Text("\(Int(userCurrentScore.normalized(min: userMinScore, max: userMaxScore)))%")
-                            .font(.subheadline)
-                        Text("Today")
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                    }
-                    
-                    // Average Battery
-                    VStack(spacing: 0) {
-                        SmallBatteryView(
-                            value: userAverageScore,
-                            minValue: userMinScore,
-                            maxValue: userMaxScore,
-                            isInverted: false,
-                            isEmpty: false,
-                            isGray: true
-                        )
-                        .frame(height: 250)  // Reduced height
-                        .padding(.bottom, 2)  // Add small padding between battery and text
-                        
-                        Text("\(Int(userAverageScore.normalized(min: userMinScore, max: userMaxScore)))%")
-                            .font(.subheadline)
-                        Text("Average")
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                    }
-                }
-                
-                // Partner section (similar changes)
-                if partnerId != nil {
-                    Text(partnerName)
+                VStack(spacing: 5) {
+                    // User section
+                    Text(userName)
                         .font(.headline)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.leading)
                     
                     HStack(spacing: 50) {
+                        // Today Battery
                         VStack(spacing: 0) {
                             SmallBatteryView(
-                                value: partnerCurrentScore,
-                                minValue: partnerMinScore,
-                                maxValue: partnerMaxScore,
+                                value: userCurrentScore,
+                                minValue: userMinScore,
+                                maxValue: userMaxScore,
                                 isInverted: false,
-                                isEmpty: partnerId == nil,
+                                isEmpty: false,
                                 isGray: false
                             )
-                            .frame(height: 250)  // Reduced height
-                            .padding(.bottom, 2)  // Add small padding between battery and text
+                            .frame(height: 250)
+                            .padding(.bottom, 2)
                             
-                            Text("\(Int(partnerCurrentScore.normalized(min: userMinScore, max: userMaxScore)))%")
+                            Text("\(Int(userCurrentScore.normalized(min: userMinScore, max: userMaxScore)))%")
                                 .font(.subheadline)
                             Text("Today")
                                 .font(.caption)
                                 .foregroundColor(.gray)
                         }
                         
+                        // Average Battery
                         VStack(spacing: 0) {
                             SmallBatteryView(
-                                value: partnerAverageScore,
-                                minValue: partnerMinScore,
-                                maxValue: partnerMaxScore,
+                                value: userAverageScore,
+                                minValue: userMinScore,
+                                maxValue: userMaxScore,
                                 isInverted: false,
-                                isEmpty: partnerId == nil,
+                                isEmpty: false,
                                 isGray: true
                             )
-                            .frame(height: 250)  // Reduced height
-                            .padding(.bottom, 2)  // Add small padding between battery and text
+                            .frame(height: 250)
+                            .padding(.bottom, 2)
                             
-                            Text("\(Int(partnerAverageScore.normalized(min: userMinScore, max: userMaxScore)))%")
+                            Text("\(Int(userAverageScore.normalized(min: userMinScore, max: userMaxScore)))%")
                                 .font(.subheadline)
                             Text("Average")
                                 .font(.caption)
                                 .foregroundColor(.gray)
                         }
                     }
+                    
+                    // Partner section
+                    if partnerId != nil {
+                        Text(partnerName)
+                            .font(.headline)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.leading)
+                        
+                        HStack(spacing: 50) {
+                            VStack(spacing: 0) {
+                                SmallBatteryView(
+                                    value: partnerCurrentScore,
+                                    minValue: partnerMinScore,
+                                    maxValue: partnerMaxScore,
+                                    isInverted: false,
+                                    isEmpty: partnerId == nil,
+                                    isGray: false
+                                )
+                                .frame(height: 250)
+                                .padding(.bottom, 2)
+                                
+                                Text("\(Int(partnerCurrentScore.normalized(min: userMinScore, max: userMaxScore)))%")
+                                    .font(.subheadline)
+                                Text("Today")
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
+                            }
+                            
+                            VStack(spacing: 0) {
+                                SmallBatteryView(
+                                    value: partnerAverageScore,
+                                    minValue: partnerMinScore,
+                                    maxValue: partnerMaxScore,
+                                    isInverted: false,
+                                    isEmpty: partnerId == nil,
+                                    isGray: true
+                                )
+                                .frame(height: 250)
+                                .padding(.bottom, 2)
+                                
+                                Text("\(Int(partnerAverageScore.normalized(min: userMinScore, max: userMaxScore)))%")
+                                    .font(.subheadline)
+                                Text("Average")
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
+                            }
+                        }
+                    }
                 }
-            }
-            .padding(20)
-            
-            if isLoading {
-                ProgressView()
-                    .scaleEffect(1.5)
-                    .progressViewStyle(CircularProgressViewStyle())
-            }
-        }
-        .onAppear {
-            Task {
-                await loadPartnerInfo()
-                await loadScores()
-                await loadNames()
-            }
-        }
-        .onChange(of: selectedMetric) { _ in
-            Task {
-                await loadScores()
-            }
-        }
-    }
-
+                .padding(20)
+                .foregroundColor(Color(red:0.894,green: 0.949, blue: 0.839))
+                
+                if isLoading {
+                                ProgressView()
+                                    .scaleEffect(1.5)
+                                    .progressViewStyle(CircularProgressViewStyle())
+                            }
+                        }
+                        .navigationBarTitleDisplayMode(.inline)
+                        .toolbar {
+                            ToolbarItem(placement: .navigationBarLeading) {
+                                Image("Icon")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(height: 30)
+                            }
+                            
+                            ToolbarItem(placement: .principal) {
+                                Menu {
+                                    ForEach([
+                                        DisplayMetric.healthMetric(.restingHeartRate),
+                                        DisplayMetric.healthMetric(.steps),
+                                        DisplayMetric.healthMetric(.activeEnergy),
+                                        DisplayMetric.healthMetric(.heartRateVariability),
+                                        DisplayMetric.healthMetric(.exerciseTime),
+                                        DisplayMetric.healthMetric(.elevatedHeartRateTime),
+                                        DisplayMetric.bandwidthScore
+                                    ], id: \.self) { metric in
+                                        Button {
+                                            selectedMetric = metric
+                                        } label: {
+                                            Text(metric.displayName)
+                                                .font(.custom("KulimPark-SemiBold", size: 16))
+                                        }
+                                    }
+                                } label: {
+                                    HStack {
+                                        Text(selectedMetric.displayName)
+                                            .font(.custom("KulimPark-SemiBold", size: 16))
+                                            .foregroundColor(Color(red:0.894, green: 0.949, blue: 0.839))
+                                        Image(systemName: "chevron.down")
+                                            .font(.custom("KulimPark-SemiBold", size: 12))
+                                            .foregroundColor(Color(red:0.894, green: 0.949, blue: 0.839))
+                                    }
+                                }
+                            }
+                            
+                            ToolbarItem(placement: .navigationBarTrailing) {
+                                NavigationLink(destination: SettingsView()) {
+                                    Image(systemName: "gearshape.fill")
+                                        .foregroundColor(Color(red:0.894, green: 0.949, blue: 0.839))
+                                }
+                            }
+                        }
+                    }
+                    .onAppear {
+                        Task {
+                            await loadPartnerInfo()
+                            await loadScores()
+                            await loadNames()
+                        }
+                    }
+                    .onChange(of: selectedMetric) { _ in
+                        Task {
+                            await loadScores()
+                        }
+                    }
+                }
+    
         private func loadNames() async {
             guard let currentUserId = authManager.user?.uid else { return }
             

@@ -6,7 +6,7 @@ admin.initializeApp();
 
 exports.createDailyTask = functions.scheduler.onSchedule(
     {
-        schedule: "30 0,2,4,6,8,10,12,14,16,18,20,22 * * *",
+        schedule: "30 * * * *",
         timeZone: "UTC",
     },
     async () => {

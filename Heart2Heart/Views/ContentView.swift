@@ -36,39 +36,28 @@ struct MainTabView: View {
     @Binding var selectedTab: Int
     
     var body: some View {
-        NavigationView {
-            TabView(selection: $selectedTab) {
-                CalendarView()
-                    .tabItem {
-                        Image(systemName: selectedTab == 0 ? "circle.fill" : "circle")
-                            .environment(\.symbolVariants, .none)
-                    }
-                    .tag(0)
-
-                HomeView()
-                    .tabItem {
-                        Image(systemName: "house.fill")
-                    }
-                    .tag(1)
-
-                ComponentView()
-                    .tabItem {
-                        Image(systemName: selectedTab == 2 ?  "circle.fill" : "circle")
-                            .environment(\.symbolVariants, .none)
-                    }
-                    .tag(2)
-            }
-            .tint(.gray)
-            .font(.custom("KulimPark-SemiBold", size: 14))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    NavigationLink(destination: SettingsView()) {
-                        Image(systemName: "gear")
-                            .foregroundColor(Color(red:0.894,green: 0.949, blue: 0.839))
-                    }
+        TabView(selection: $selectedTab) {
+            CalendarView()
+                .tabItem {
+                    Image(systemName: selectedTab == 0 ? "circle.fill" : "circle")
+                        .environment(\.symbolVariants, .none)
                 }
-            }
+                .tag(0)
+
+            HomeView()
+                .tabItem {
+                    Image(systemName: "house.fill")
+                }
+                .tag(1)
+
+            ComponentView()
+                .tabItem {
+                    Image(systemName: selectedTab == 2 ?  "circle.fill" : "circle")
+                        .environment(\.symbolVariants, .none)
+                }
+                .tag(2)
         }
+        .tint(.gray)
+        .font(.custom("KulimPark-SemiBold", size: 18))
     }
 }

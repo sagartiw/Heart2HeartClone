@@ -22,67 +22,35 @@ struct HomeView: View {
     @State private var isLoading = true
     @State private var partnerId: String?
     @State private var showPartnerInvitation = false
+    
+    private let dateFormatter: DateFormatter = {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "EEEE, MMMM d"
+            return formatter
+        }()
         
     var body: some View {
-        ZStack {
-            Color(red: 0.141, green: 0.141, blue: 0.141)
-                .ignoresSafeArea()
-            HStack(spacing: 40) {
-                // User Battery
-                VStack(spacing: 5) {
-                    BatteryView(
-                        value: userScore,
-                        minValue: userMinScore,
-                        maxValue: userMaxScore,
-                        isInverted: false,
-                        averageValue: userAverage,
-                        isEmpty: false
-                    )
-                    .frame(height: 400)
-                    
-                    // Add percentage displays
-                    HStack(spacing: 20) {
-                        VStack {
-                            Text("\(Int(userScore.normalized(min: userMinScore, max: userMaxScore)))%")
-                                .font(.subheadline)
-                            Text("Today")
-                                .font(.caption)
-                                .foregroundColor(.gray)
-                        }
+        NavigationView {
+            ZStack {
+                Color(red: 0.141, green: 0.141, blue: 0.141)
+                    .ignoresSafeArea()
+                HStack(spacing: 40) {
+                    // User Battery
+                    VStack(spacing: 5) {
+                        BatteryView(
+                            value: userScore,
+                            minValue: userMinScore,
+                            maxValue: userMaxScore,
+                            isInverted: false,
+                            averageValue: userAverage,
+                            isEmpty: false
+                        )
+                        .frame(height: 400)
                         
-                        VStack {
-                            Text("\(Int(userAverage.normalized(min: userMinScore, max: userMaxScore)))%")
-                                .font(.subheadline)
-                            Text("Average")
-                                .font(.caption)
-                                .foregroundColor(.gray)
-                        }
-                    }
-                    
-                    Spacer()
-                            .frame(height: 20)
-                    
-                    Text(authManager.user?.displayName ?? "User")
-                }
-                
-                // Partner Battery
-                VStack(spacing: 5) {
-                    BatteryView(
-                        value: partnerId != nil ? partnerScore : 0,
-                        minValue: partnerId != nil ? partnerMinScore : 0,
-                        maxValue: partnerId != nil ? partnerMaxScore : 100,
-                        isInverted: false,
-                        averageValue: partnerId != nil ? partnerAverage : 0,
-                        isEmpty: partnerId == nil
-                    )
-                    .frame(height: 400)
-                    .opacity(partnerId != nil ? 1 : 0.5)
-                    
-                    if partnerId != nil {
                         // Add percentage displays
                         HStack(spacing: 20) {
                             VStack {
-                                Text("\(Int(partnerScore.normalized(min: partnerMinScore, max: partnerMaxScore)))%")
+                                Text("\(Int(userScore.normalized(min: userMinScore, max: userMaxScore)))%")
                                     .font(.subheadline)
                                 Text("Today")
                                     .font(.caption)
@@ -90,49 +58,103 @@ struct HomeView: View {
                             }
                             
                             VStack {
-                                Text("\(Int(partnerAverage.normalized(min: partnerMinScore, max: partnerMaxScore)))%")
+                                Text("\(Int(userAverage.normalized(min: userMinScore, max: userMaxScore)))%")
                                     .font(.subheadline)
                                 Text("Average")
                                     .font(.caption)
                                     .foregroundColor(.gray)
                             }
                         }
+                        
+                        Spacer()
+                            .frame(height: 20)
+                        
+                        Text(authManager.user?.displayName ?? "User")
                     }
                     
-                    Spacer()
-                            .frame(height: 20)
-                    
-                    ZStack {
+                    // Partner Battery
+                    VStack(spacing: 5) {
+                        BatteryView(
+                            value: partnerId != nil ? partnerScore : 0,
+                            minValue: partnerId != nil ? partnerMinScore : 0,
+                            maxValue: partnerId != nil ? partnerMaxScore : 100,
+                            isInverted: false,
+                            averageValue: partnerId != nil ? partnerAverage : 0,
+                            isEmpty: partnerId == nil
+                        )
+                        .frame(height: 400)
+                        .opacity(partnerId != nil ? 1 : 0.5)
+                        
                         if partnerId != nil {
-                            Text(partnerName)
-                        } else {
-                            Button("Invite Partner") {
-                                showPartnerInvitation = true
+                            // Add percentage displays
+                            HStack(spacing: 20) {
+                                VStack {
+                                    Text("\(Int(partnerScore.normalized(min: partnerMinScore, max: partnerMaxScore)))%")
+                                        .font(.subheadline)
+                                    Text("Today")
+                                        .font(.caption)
+                                        .foregroundColor(.gray)
+                                }
+                                
+                                VStack {
+                                    Text("\(Int(partnerAverage.normalized(min: partnerMinScore, max: partnerMaxScore)))%")
+                                        .font(.subheadline)
+                                    Text("Average")
+                                        .font(.caption)
+                                        .foregroundColor(.gray)
+                                }
                             }
-                            .buttonStyle(.borderedProminent)
+                        }
+                        
+                        Spacer()
+                            .frame(height: 20)
+                        
+                        ZStack {
+                            if partnerId != nil {
+                                Text(partnerName)
+                            } else {
+                                Button("Invite Partner") {
+                                    showPartnerInvitation = true
+                                }
+                                .buttonStyle(.borderedProminent)
+                            }
                         }
                     }
                 }
+                .padding(40)
+                .foregroundColor(Color(red:0.894,green: 0.949, blue: 0.839))
+                
+                if isLoading {
+                    ProgressView()
+                        .scaleEffect(1.5)
+                        .progressViewStyle(CircularProgressViewStyle())
+                }
             }
-            .padding(40)
-            .foregroundColor(Color(red:0.894,green: 0.949, blue: 0.839))
-            
-            if isLoading {
-                ProgressView()
-                    .scaleEffect(1.5)
-                    .progressViewStyle(CircularProgressViewStyle())
-            }
-        }
-        .sheet(isPresented: $showPartnerInvitation) {
-            PartnerInvitationView(isPresented: $showPartnerInvitation)
-        }
-        .onAppear {
-            Task {
-                await loadPartnerInfo()
-                await loadScores()
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Image("Icon") 
+                        .resizable()
+                        .scaledToFit()
+                        .frame(height: 30)
+                }
+                
+                ToolbarItem(placement: .principal) {
+                    Text(dateFormatter.string(from: Date()))
+                        .foregroundColor(Color(red:0.894, green: 0.949, blue: 0.839))
+                }
+                
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    NavigationLink(destination: SettingsView()) {
+                        Image(systemName: "gearshape.fill")
+                            .foregroundColor(Color(red:0.894, green: 0.949, blue: 0.839))
+                    }
+                }
             }
         }
     }
+    
+        
         private func loadPartnerInfo() async {
             guard let currentUserId = authManager.user?.uid else {
                 print("No user logged in")

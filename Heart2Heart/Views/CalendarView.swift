@@ -10,132 +10,138 @@ struct MetricNormalization {
 
 struct CalendarView: View {
     @EnvironmentObject private var healthDataProcessor: HealthDataProcessor
-    @State private var selectedMetric: DisplayMetric = .healthMetric(.restingHeartRate)
+    @EnvironmentObject private var authManager: AuthenticationManager
+    private var firestoreManager = FirestoreManager()
+
     @State private var currentMonth = Date()
     @State private var dailyValues: [Date: Double] = [:]
     @State private var normalization: MetricNormalization?
     @State private var errorMessage: String?
+    @State private var selectedDate: Date?
+    @State private var components: [String: Double] = [:]
+
+
     
     var body: some View {
-        ZStack {
-            Color(red: 0.141, green: 0.141, blue: 0.141)
-                .ignoresSafeArea()
-            VStack(spacing: 0) {
-                // Top Bar
-                HStack {
-                    // Logo
-                    Image("Logo")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 30, height: 30)
-                        .padding(.leading)
-                    
-                    Spacer()
-                    
-                    // Month Navigation
-                    HStack {
-                        Text(monthYearString(from: currentMonth))
-                            .font(.custom("KulimPark-SemiBold", size: 18))
-                            .foregroundColor(.white)  // Add this
-                            .padding(.horizontal, 8)
-                        
-                        Button(action: previousMonth) {
-                            Image(systemName: "chevron.left")
-                                .foregroundColor(.white)  // Add this
-                        }
-                        
-                        Button(action: nextMonth) {
-                            Image(systemName: "chevron.right")
-                                .foregroundColor(.white)  // Add this
-                        }
+        NavigationView {
+            ZStack {
+                Color(red: 0.141, green: 0.141, blue: 0.141)
+                    .ignoresSafeArea()
+                
+                VStack(spacing: 0) {
+                    if let error = errorMessage {
+                        Text(error)
+                            .foregroundColor(.red)
+                            .padding()
                     }
                     
-                    Spacer()
-                    
-                    //Metric Picker
-                    Menu {
-                        ForEach([
-                            DisplayMetric.healthMetric(.restingHeartRate),
-                            DisplayMetric.healthMetric(.steps),
-                            DisplayMetric.healthMetric(.activeEnergy),
-                            DisplayMetric.healthMetric(.heartRateVariability),
-                            DisplayMetric.healthMetric(.exerciseTime),
-                            DisplayMetric.healthMetric(.elevatedHeartRateTime),
-                            DisplayMetric.bandwidthScore
-                        ], id: \.self) { metric in
-                            Button {
-                                selectedMetric = metric
-                            } label: {
-                                Text(metric.displayName)
-                                    .font(.custom("KulimPark-SemiBold", size: 16))
-                            }
-                        }
-                    } label: {
-                        HStack {
-                            Text(selectedMetric.displayName)
-                                .font(.custom("KulimPark-SemiBold", size: 16))
-                                .foregroundColor(.white)
-                            Image(systemName: "chevron.down")
-                                .font(.custom("KulimPark-SemiBold", size: 12))
-                                .foregroundColor(.white)
-                        }
-                    }
-                    .padding(.trailing)
-                }
-                .padding(.top)
-                .padding(.vertical, 8)
-                
-                // Error Message
-                if let error = errorMessage {
-                    Text(error)
-                        .foregroundColor(.red)
-                        .padding()
-                }
-                
-                // Calendar Content
-                ScrollView {
-                    VStack {
-                        // Day labels
-                        HStack {
-                            ForEach(Calendar.current.shortWeekdaySymbols, id: \.self) { day in
-                                Text(day)
-                                    .frame(maxWidth: .infinity)
-                            }
-                        }
-                        .padding(.top)
-                        
-                        // Calendar grid
-                        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: 10) {
-                            ForEach(daysInMonth(), id: \.self) { date in
-                                if let date = date {
-                                    DayCell(date: date,
-                                            value: dailyValues[date] ?? 0,
-                                            metric: selectedMetric,
-                                            normalization: normalization)
-                                } else {
-                                    Color.clear
-                                        .aspectRatio(1, contentMode: .fit)
+                    ScrollView {
+                        VStack {
+                            HStack {
+                                ForEach(Calendar.current.shortWeekdaySymbols, id: \.self) { day in
+                                    Text(day)
+                                        .foregroundColor(Color(red:0.894, green: 0.949, blue: 0.839))
+                                        .frame(maxWidth: .infinity)
                                 }
                             }
+                            .padding(.top)
+                            
+                            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: 10) {
+                                ForEach(daysInMonth(), id: \.self) { date in
+                                    if let date = date {
+                                        DayCell(
+                                            date: date,
+                                            value: dailyValues[date] ?? 0,
+                                            normalization: normalization,
+                                            onTap: {
+                                                selectedDate = date
+                                                Task {
+                                                    await loadComponents(for: date)
+                                                }
+                                            },
+                                            isSelected: selectedDate == date
+                                        )
+                                    } else {
+                                        Color.clear
+                                            .aspectRatio(1, contentMode: .fit)
+                                    }
+                                }
+                            }
+                            .padding()
                         }
-                        .padding()
+                        
+                        if let selectedDate = selectedDate, !components.isEmpty {
+                            VStack(alignment: .leading, spacing: 10) {
+                                Text("Components:")
+                                    .foregroundColor(Color(red:0.894, green: 0.949, blue: 0.839))
+                                    .font(.headline)
+                                    .padding(.top)
+                                
+                                ForEach(Array(components.keys.sorted()), id: \.self) { key in
+                                    if let value = components[key] {
+                                        HStack {
+                                            Text(key == "exerciseComponent" ? "Exercise:" :
+                                                 key == "heartRateComponent" ? "Heart Rate:" :
+                                                 key == "sleepComponent" ? "Sleep:" :
+                                                 key.capitalized)
+                                                .foregroundColor(Color(red:0.894, green: 0.949, blue: 0.839))
+                                            Spacer()
+                                            Text(String(format: "%.0f", value))
+                                                .foregroundColor(Color(red:0.894, green: 0.949, blue: 0.839))
+                                        }
+                                        .padding(.horizontal)
+                                    }
+                                }
+                            }
+                            .padding()
+                            .background(Color.black.opacity(0.2))
+                            .cornerRadius(10)
+                            .padding()
+                        }                    }
+                }
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarLeading) {
+                        Image("Icon")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(height: 30)
+                    }
+                    
+                    ToolbarItem(placement: .principal) {
+                        HStack {
+                            Text(monthYearString(from: currentMonth))
+                                .foregroundColor(Color(red:0.894, green: 0.949, blue: 0.839))
+                            
+                            Button(action: previousMonth) {
+                                Image(systemName: "chevron.left")
+                                    .foregroundColor(Color(red:0.894, green: 0.949, blue: 0.839))
+                            }
+                            
+                            Button(action: nextMonth) {
+                                Image(systemName: "chevron.right")
+                                    .foregroundColor(Color(red:0.894, green: 0.949, blue: 0.839))
+                            }
+                        }
+                    }
+                    
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        NavigationLink(destination: SettingsView()) {
+                            Image(systemName: "gearshape.fill")
+                                .foregroundColor(Color(red:0.894, green: 0.949, blue: 0.839))
+                        }
                     }
                 }
             }
-            .onChange(of: selectedMetric) { newValue in
-                Task {
-                    await loadMonthData()
-                }
+        }
+        .onChange(of: currentMonth) { _ in
+            Task {
+                await loadMonthData()
             }
-            .onChange(of: currentMonth) { _ in
-                Task {
-                    await loadMonthData()
-                }
-            }
-            .onAppear {
-                Task {
-                    await loadMonthData()
-                }
+        }
+        .onAppear {
+            Task {
+                await loadMonthData()
             }
         }
     }
@@ -177,37 +183,25 @@ struct CalendarView: View {
     }
     
     private func loadMonthData() async {
-        print("Starting loadMonthData")
         dailyValues.removeAll()
         
         await calculateNormalization()
         
         let calendar = Calendar.current
         let interval = calendar.dateInterval(of: .month, for: currentMonth)!
-        var date = interval.start
+        var date = calendar.date(byAdding: .day, value: -1, to: interval.end) ?? interval.end
         let today = calendar.startOfDay(for: Date())
         
-        while date < interval.end {
-            // Skip if date is today or in the future
+        while date >= interval.start {
             if date < today {
-                switch selectedMetric {
-                case .healthMetric(let metric):
-                    do {
-                        let value = try await healthDataProcessor.healthManager.getDailyMetric(metric, for: date)
-                        dailyValues[date] = value
-                    } catch {
-                        print("Error fetching metric for \(date): \(error)")
-                    }
-                case .bandwidthScore:
-                    do {
-                        let score = try await healthDataProcessor.calculateBandwidthScore(for: date)
-                        dailyValues[date] = score
-                    } catch {
-                        print("Error calculating Bandwidth score for \(date): \(error)")
-                    }
+                do {
+                    let score = try await healthDataProcessor.calculateBandwidthScore(for: date)
+                    dailyValues[date] = score
+                } catch {
+                    print("Error calculating Bandwidth score for \(date): \(error)")
                 }
             }
-            date = calendar.date(byAdding: .day, value: 1, to: date) ?? date
+            date = calendar.date(byAdding: .day, value: -1, to: date) ?? date
         }
     }
     
@@ -220,15 +214,8 @@ struct CalendarView: View {
         
         while date < interval.end {
             if date < today {
-                switch selectedMetric {
-                case .healthMetric(let metric):
-                    if let value = try? await healthDataProcessor.healthManager.getDailyMetric(metric, for: date) {
-                        allValues.append(value)
-                    }
-                case .bandwidthScore:
-                    if let score = try? await healthDataProcessor.calculateBandwidthScore(for: date) {
-                        allValues.append(score)
-                    }
+                if let score = try? await healthDataProcessor.calculateBandwidthScore(for: date) {
+                    allValues.append(score)
                 }
             }
             date = calendar.date(byAdding: .day, value: 1, to: date) ?? date
@@ -238,23 +225,31 @@ struct CalendarView: View {
             let min = allValues.min() ?? 0
             let max = allValues.max() ?? 100
             
-            let shouldInvert = switch selectedMetric {
-            case .healthMetric(let metric):
-                switch metric {
-                case .restingHeartRate, .elevatedHeartRateTime:
-                    true
-                default:
-                    false
-                }
-            case .bandwidthScore:
-                false
-            }
-            
             normalization = MetricNormalization(
                 min: min,
                 max: max,
-                shouldInvert: shouldInvert
+                shouldInvert: false
             )
+        }
+    }
+    
+    private func loadComponents(for date: Date) async {
+        components.removeAll()
+        
+        let metrics: [ComputedMetric] = [
+            .heartRateComponent,
+            .exerciseComponent,
+            .sleepComponent
+        ]
+        
+        for metric in metrics {
+            if let value = try? await firestoreManager.getComputedData(
+                userId: authManager.user?.uid ?? "",  // Make sure to use .uid here
+                metric: metric,
+                date: date
+            ) {
+                components[metric.rawValue] = value
+            }
         }
     }}
 
@@ -262,22 +257,23 @@ struct CalendarView: View {
 struct DayCell: View {
     let date: Date
     let value: Double
-    let metric: DisplayMetric
     let normalization: MetricNormalization?
+    let onTap: () -> Void
+    let isSelected: Bool
     
     private var isToday: Bool {
         Calendar.current.isDateInToday(date)
     }
     
     private func normalizedValue() -> Double {
-            guard let norm = normalization, norm.max != norm.min else { return 0 }
-            let normalized = (value - norm.min) / (norm.max - norm.min)
+        guard let norm = normalization, norm.max != norm.min else { return 0 }
+        let normalized = (value - norm.min) / (norm.max - norm.min)
         if normalized == 0 {
             return 0.01
         }
-            return normalized
+        return normalized
         
-        }
+    }
     
     private func colorNormalizedValue() -> Double {
         // Only invert the value for color calculation
@@ -293,7 +289,7 @@ struct DayCell: View {
             brightness: 0.8
         )
     }
-        
+    
     var body: some View {
         ZStack {
             if isToday {
@@ -336,49 +332,22 @@ struct DayCell: View {
             }
         }
         .aspectRatio(1, contentMode: .fit)
+        .overlay(
+                    isSelected ?
+                        RoundedRectangle(cornerRadius: 20)
+                            .stroke(Color(red:0.894, green: 0.949, blue: 0.839), lineWidth: 2)
+                        : nil
+                )
+                .onTapGesture {
+                    onTap()
+                }
     }
     
     private func formatValue() -> String {
-        switch metric {
-        case .healthMetric(let metric):
-            switch metric {
-            case .steps:
-                return String(format: "%.0f", value)
-            case .activeEnergy:
-                return String(format: "%.0f", value)
-            case .heartRateVariability:
-                return String(format: "%.1f", value)
-            case .exerciseTime:
-                return String(format: "%.0f", value)
-            case .restingHeartRate:
-                return String(format: "%.0f", value)
-            case .elevatedHeartRateTime:
-                return String(format: "%.0f", value)
-            default:
-                return String(format: "%.1f", value)
-            }
-        case .bandwidthScore:
             return String(format: "%.0f", value)
         }
     }
-    
-    private func maxValue() -> Double {
-        switch metric {
-        case .healthMetric(let metric):
-            switch metric {
-            case .steps: return 10000
-            case .activeEnergy: return 1000
-            case .heartRateVariability: return 100
-            case .exerciseTime: return 60
-            case .restingHeartRate: return 100
-            case .elevatedHeartRateTime: return 60
-            default: return 100
-            }
-        case .bandwidthScore:
-            return 1000
-        }
-    }
-}
+
 
 extension Color {
     func darker(by percentage: CGFloat = 0.2) -> Color {
