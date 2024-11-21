@@ -333,11 +333,15 @@ struct DayCell: View {
         }
         .aspectRatio(1, contentMode: .fit)
         .overlay(
-                    isSelected ?
-                        RoundedRectangle(cornerRadius: 20)
-                            .stroke(Color(red:0.894, green: 0.949, blue: 0.839), lineWidth: 2)
-                        : nil
-                )
+            isSelected ?
+                Circle()
+                    .stroke(style: StrokeStyle(
+                        lineWidth: 2,
+                        dash: [5]
+                    ))
+                    .foregroundColor(Color(red:0.894, green: 0.949, blue: 0.839))
+                : nil
+        )
                 .onTapGesture {
                     onTap()
                 }

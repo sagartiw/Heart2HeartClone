@@ -11,6 +11,21 @@ struct SettingsView: View {
     @State private var isSuccess = false
     @EnvironmentObject var authManager: AuthenticationManager
     
+    static let displayNames: [String: String] = [
+        "sleep": "Sleep",
+        "exercise": "Exercise",
+        "heartRate": "Heart Rate",
+        "currentDay": "Current Day",
+        "yesterday": "Yesterday",
+        "twoDaysAgo": "Two Days Ago",
+        "minutes": "Active Minutes",
+        "calories": "Calories Burned",
+        "steps": "Step Count",
+        "elevated": "Elevated Heart Rate",
+        "variability": "Heart Rate Variability",
+        "resting": "Resting Heart Rate"
+    ]
+    
     var body: some View {
         NavigationView {
             Form {
@@ -48,13 +63,13 @@ struct SettingsView: View {
             }
             .navigationTitle("Settings")
             .toolbar {
-                    ToolbarItem(placement: .navigationBarLeading) {
+                    ToolbarItem(placement: .navigationBarTrailing) {
                         Button("Sign Out") {
                             try? authManager.signOut()
                         }
                         .foregroundColor(.red)
                     }
-                    ToolbarItem(placement: .navigationBarTrailing) {
+                    ToolbarItem(placement: .navigationBarLeading) {
                         Button("Reset") {
                             settingsManager.resetToDefaults()
                         }
@@ -72,6 +87,7 @@ struct SettingsView: View {
         Group {
             ForEach(["Sleep", "Exercise", "Heart Rate"], id: \.self) { category in
                 Toggle(category, isOn: binding(for: category))
+                    .tint(Color(red: 0.794, green: 0.849, blue: 0.739))
             }
         }
     }
@@ -101,7 +117,7 @@ struct SettingsView: View {
     private var categoryWeights: some View {
         ForEach(Array(settingsManager.settings.mainWeights.keys), id: \.self) { key in
             WeightSlider(
-                title: "\(key.capitalized) Weight",
+                title: SettingsView.displayNames[key] ?? key.capitalized,
                 value: .init(
                     get: { settingsManager.settings.mainWeights[key] ?? 0 },
                     set: { settingsManager.settings.mainWeights[key] = $0 }
@@ -125,7 +141,7 @@ struct SettingsView: View {
         Section(header: Text("\(title) (percentage within category)")) {
             ForEach(Array(weights.wrappedValue.keys), id: \.self) { key in
                 WeightSlider(
-                    title: key.capitalized,
+                    title: SettingsView.displayNames[key] ?? key.capitalized,
                     value: .init(
                         get: { weights.wrappedValue[key] ?? 0 },
                         set: { weights.wrappedValue[key] = $0 }

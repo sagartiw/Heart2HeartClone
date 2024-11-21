@@ -6,7 +6,7 @@ class SettingsManager: ObservableObject {
     private var savedSettings: Settings // Keep track of last saved settings
     
     
-    struct Settings: Codable, Equatable {  // Add Equatable conformance
+    struct Settings: Codable, Equatable {  
             var isSleepEnabled = false
             var isExerciseEnabled = true
             var isHeartRateEnabled = true
@@ -152,4 +152,34 @@ class SettingsManager: ObservableObject {
         
         return (true, "Settings saved successfully")
     }
+}
+
+struct SettingsDisplayNames {
+    // Main Categories
+    static let mainCategories: [String: String] = [
+        "sleep": "Sleep",
+        "exercise": "Exercise",
+        "heartRate": "Heart Rate"
+    ]
+    
+    // Recent Days
+    static let recentDays: [String: String] = [
+        "currentDay": "Today",
+        "yesterday": "Yesterday",
+        "twoDaysAgo": "Two Days Ago"
+    ]
+    
+    // Exercise Subcategories
+    static let exercise: [String: String] = [
+        "minutes": "Active Minutes",
+        "calories": "Calories Burned",
+        "steps": "Step Count"
+    ]
+    
+    // Heart Rate Subcategories
+    static let heartRate: [String: String] = [
+        "elevated": "Elevated Heart Rate",
+        "variability": "Heart Rate Variability",
+        "resting": "Resting Heart Rate"
+    ]
 }

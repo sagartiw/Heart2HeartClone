@@ -445,7 +445,6 @@ final class HealthDataProcessor : ObservableObject {
 
 //MARK: component metric extension
 enum componentMetric {
-    // Add new computed components
     case heartRateComponent
     case exerciseComponent
     case sleepComponent

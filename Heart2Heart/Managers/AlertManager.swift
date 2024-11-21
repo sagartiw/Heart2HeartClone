@@ -16,7 +16,6 @@ struct Alert: Identifiable {
     
     enum AlertType: String {
         case lowBandwidthAlert
-        // Add other alert types as needed
     }
     
     enum AlertStatus: String {

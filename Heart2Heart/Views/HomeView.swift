@@ -34,9 +34,10 @@ struct HomeView: View {
             ZStack {
                 Color(red: 0.141, green: 0.141, blue: 0.141)
                     .ignoresSafeArea()
-                HStack(spacing: 40) {
-                    // User Battery
-                    VStack(spacing: 5) {
+                
+                VStack {
+                    // Batteries HStack
+                    HStack(spacing: 40) {
                         BatteryView(
                             value: userScore,
                             minValue: userMinScore,
@@ -47,33 +48,6 @@ struct HomeView: View {
                         )
                         .frame(height: 400)
                         
-                        // Add percentage displays
-                        HStack(spacing: 20) {
-                            VStack {
-                                Text("\(Int(userScore.normalized(min: userMinScore, max: userMaxScore)))%")
-                                    .font(.subheadline)
-                                Text("Today")
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
-                            }
-                            
-                            VStack {
-                                Text("\(Int(userAverage.normalized(min: userMinScore, max: userMaxScore)))%")
-                                    .font(.subheadline)
-                                Text("Average")
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
-                            }
-                        }
-                        
-                        Spacer()
-                            .frame(height: 20)
-                        
-                        Text(authManager.user?.displayName ?? "User")
-                    }
-                    
-                    // Partner Battery
-                    VStack(spacing: 5) {
                         BatteryView(
                             value: partnerId != nil ? partnerScore : 0,
                             minValue: partnerId != nil ? partnerMinScore : 0,
@@ -84,12 +58,15 @@ struct HomeView: View {
                         )
                         .frame(height: 400)
                         .opacity(partnerId != nil ? 1 : 0.5)
-                        
-                        if partnerId != nil {
-                            // Add percentage displays
+                    }
+                    
+                    // Stats and Names HStack
+                    HStack(spacing: 40) {
+                        // User Stats and Name
+                        VStack(spacing: 5) {
                             HStack(spacing: 20) {
                                 VStack {
-                                    Text("\(Int(partnerScore.normalized(min: partnerMinScore, max: partnerMaxScore)))%")
+                                    Text("\(Int(userScore.normalized(min: userMinScore, max: userMaxScore)))%")
                                         .font(.subheadline)
                                     Text("Today")
                                         .font(.caption)
@@ -97,26 +74,54 @@ struct HomeView: View {
                                 }
                                 
                                 VStack {
-                                    Text("\(Int(partnerAverage.normalized(min: partnerMinScore, max: partnerMaxScore)))%")
+                                    Text("\(Int(userAverage.normalized(min: userMinScore, max: userMaxScore)))%")
                                         .font(.subheadline)
                                     Text("Average")
                                         .font(.caption)
                                         .foregroundColor(.gray)
                                 }
                             }
+                            
+                            Spacer()
+                                .frame(height: 20)
+                            
+                            Text(authManager.user?.displayName ?? "User")
                         }
                         
-                        Spacer()
-                            .frame(height: 20)
-                        
-                        ZStack {
+                        // Partner Stats and Name
+                        VStack(spacing: 5) {
                             if partnerId != nil {
-                                Text(partnerName)
-                            } else {
-                                Button("Invite Partner") {
-                                    showPartnerInvitation = true
+                                HStack(spacing: 20) {
+                                    VStack {
+                                        Text("\(Int(partnerScore.normalized(min: partnerMinScore, max: partnerMaxScore)))%")
+                                            .font(.subheadline)
+                                        Text("Today")
+                                            .font(.caption)
+                                            .foregroundColor(.gray)
+                                    }
+                                    
+                                    VStack {
+                                        Text("\(Int(partnerAverage.normalized(min: partnerMinScore, max: partnerMaxScore)))%")
+                                            .font(.subheadline)
+                                        Text("Average")
+                                            .font(.caption)
+                                            .foregroundColor(.gray)
+                                    }
                                 }
-                                .buttonStyle(.borderedProminent)
+                            }
+                            
+                            Spacer()
+                                .frame(height: 20)
+                            
+                            ZStack {
+                                if partnerId != nil {
+                                    Text(partnerName)
+                                } else {
+                                    Button("Invite Partner") {
+                                        showPartnerInvitation = true
+                                    }
+                                    .buttonStyle(.borderedProminent)
+                                }
                             }
                         }
                     }
@@ -130,6 +135,11 @@ struct HomeView: View {
                         .progressViewStyle(CircularProgressViewStyle())
                 }
             }
+        .task {
+            await loadPartnerInfo()
+            await loadScores()
+        }
+            
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
