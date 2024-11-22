@@ -36,7 +36,7 @@ struct Heart2Heart: App {
         
         configureUIAppearance()
         
-        requestNotificationPermissions()
+        //requestNotificationPermissions()
 
     }
     

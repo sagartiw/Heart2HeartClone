@@ -82,7 +82,7 @@ final class HealthDataProcessor : ObservableObject {
         guard let userId = authManager.user?.uid else {
             throw AuthError.userNotAuthenticated
         }
-        
+
         let calendar = Calendar.current
         let startOfDay = calendar.startOfDay(for: date)
         
@@ -94,10 +94,9 @@ final class HealthDataProcessor : ObservableObject {
         ) {
             return cachedScore
         }
-        
         let weights = settingsManager.settings
         var components: [Double] = []
-        
+
         // Calculate heart rate component
         if weights.isHeartRateEnabled {
             let heartRateScore = try await calculateHeartRateComponent(
@@ -116,6 +115,7 @@ final class HealthDataProcessor : ObservableObject {
             components.append(exerciseScore * weights.mainWeights["exercise"]!)
         }
         
+
         // Calculate sleep component
         if weights.isSleepEnabled {
             let sleepScore = try await calculateSleepComponent(
@@ -146,6 +146,9 @@ final class HealthDataProcessor : ObservableObject {
         let calendar = Calendar.current
         let weights = settingsManager.settings.recentDaysWeights
         
+        try await Task.sleep(for: .seconds(1))
+
+
         // Check cache first
         if let cached = try await firestoreManager.getComputedData(
             userId: userId,
@@ -154,13 +157,13 @@ final class HealthDataProcessor : ObservableObject {
         ) {
             return cached
         }
-        
+
         var weightedSum = 0.0
         for daysAgo in 0...2 {
             let dayDate = calendar.date(byAdding: .day, value: -daysAgo, to: date) ?? date
             let metrics = try await getCurrentMetrics(for: dayDate)
             let baseline = try await getBaselineMetrics()
-            
+
             let dayWeight = daysAgo == 0 ? weights["currentDay"] :
                            daysAgo == 1 ? weights["yesterday"] :
                                         weights["twoDaysAgo"]
@@ -334,9 +337,10 @@ final class HealthDataProcessor : ObservableObject {
             date: date,
             percentage: Constants.elevatedHRPercentage
         )
-        
+                        
         let (hrvValue, rhrValue, sleep, exerciseValue, stepsValue, caloriesValue, elevatedHR) =
             try await (hrv, rhr, sleepMetrics, exercise, steps, calories, elevatedHRTime)
+        
         
         return Metrics(
             hrv: hrvValue,

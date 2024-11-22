@@ -6,6 +6,8 @@ struct InvitationCodeView: View {
     @EnvironmentObject var authManager: AuthenticationManager
     @Binding var isPresented: Bool
     
+    @Binding var parentIsPresented: Bool
+
     @State private var code: [String] = Array(repeating: "", count: 6)
     @FocusState private var focusedField: Int?
     @State private var showAlert = false
@@ -131,21 +133,25 @@ struct InvitationCodeView: View {
     }
     
     private func completePairing() {
-        isLoading = true
-        Task {
-            do {
-                try await authManager.completePairing(withPartnerId: partnerUserId)
-                await MainActor.run {
-                    isLoading = false
-                    isPresented = false
-                }
-            } catch {
-                await MainActor.run {
-                    alertType = .error(error.localizedDescription)
-                    showAlert = true
-                    isLoading = false
+            isLoading = true
+            Task {
+                do {
+                    try await authManager.completePairing(withPartnerId: partnerUserId)
+                    await MainActor.run {
+                        isLoading = false
+                        // Dismiss both views
+                        isPresented = false
+                        parentIsPresented = false
+                        // Complete onboarding
+                        authManager.completeOnboarding()
+                    }
+                } catch {
+                    await MainActor.run {
+                        alertType = .error(error.localizedDescription)
+                        showAlert = true
+                        isLoading = false
+                    }
                 }
             }
         }
     }
-}

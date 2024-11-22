@@ -51,6 +51,7 @@ class DailyTaskManager: ObservableObject {
                     self.processDailyTask(latestTask)
                 }
             }
+        print("listening for \(userId)")
     }
     
     private func processDailyTask(_ document: QueryDocumentSnapshot) {
@@ -59,22 +60,22 @@ class DailyTaskManager: ObservableObject {
         processingTask = Task { @MainActor in
             do {
                 isProcessing = true
+
                 
                 let taskData = document.data()
                 let timestamp = taskData["timestamp"] as? Timestamp ?? Timestamp(date: Date())
                 let taskDate = timestamp.dateValue()
                 
                 let score = try await healthDataProcessor.calculateBandwidthScore(for: taskDate)
-                
                 if let userId = taskData["userId"] as? String {
                     // Store the score
+
                     try await firestoreManager.storeComputedData(
                         userId: userId,
                         metric: .bandwidth,
                         date: taskDate,
                         value: score
                     )
-                    
                     // Analyze the score
                     try await analyzeScoreIfNeeded(userId: userId,
                                                  currentScore: score,
@@ -136,7 +137,6 @@ class DailyTaskManager: ObservableObject {
         
         var historicalScores: [Double] = []
         var currentDate = startDate
-        
         while currentDate <= endDate {
             if let score = try await firestoreManager.getComputedData(
                 userId: userId,

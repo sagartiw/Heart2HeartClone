@@ -31,8 +31,9 @@ struct PartnerInvitationView: View {
             }
             .padding()
             .sheet(isPresented: $showInvitationCode) {
-                InvitationCodeView(isPresented: $showInvitationCode)
-            }
+                        InvitationCodeView(isPresented: $showInvitationCode,
+                                         parentIsPresented: $isPresented)
+                    }
             .sheet(isPresented: $showShareSheet, onDismiss: {
                 authManager.completeOnboarding()
                 isPresented = false

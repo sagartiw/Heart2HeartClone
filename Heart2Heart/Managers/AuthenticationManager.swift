@@ -39,7 +39,8 @@ class AuthenticationManager: ObservableObject {
         try await db.collection("users").document(result.user.uid).setData([
             "email": email,
             "name": name,
-            "createdAt": FieldValue.serverTimestamp()
+            "createdAt": FieldValue.serverTimestamp(),
+            "invitationCode:": ""
         ])
         
         await MainActor.run {
@@ -93,15 +94,15 @@ class AuthenticationManager: ObservableObject {
         let snapshot = try await db.collection("users")
             .whereField("invitationCode", isEqualTo: code)
             .getDocuments()
-        
+
         if !snapshot.documents.isEmpty {
             return try await generateInvitationCode() // Try again with new code
         }
-        
+
         // Save the unique code
         try await db.collection("users").document(userId).updateData([
-            "invitationCode": code
-        ])
+                "invitationCode": code
+            ])
         
         return code
     }
@@ -143,9 +144,32 @@ class AuthenticationManager: ObservableObject {
         NotificationCenter.default.post(name: NSNotification.Name("PairingCompleted"), object: nil)
     }
     
+    func unpairUsers() async throws {
+        guard let currentUserId = user?.uid else {
+            throw AuthError.noUserFound
+        }
+        
+        let currentUserRef = db.collection("users").document(currentUserId)
+        let currentUserDoc = try await currentUserRef.getDocument()
+        
+        guard let partnerId = currentUserDoc.data()?["pairedWith"] as? String else {
+            throw AuthError.noUserFound
+        }
+        
+        let batch = db.batch()
+        let partnerRef = db.collection("users").document(partnerId)
+        
+        batch.updateData(["pairedWith": FieldValue.delete()], forDocument: currentUserRef)
+        batch.updateData(["pairedWith": FieldValue.delete()], forDocument: partnerRef)
+        
+        try await batch.commit()
+        NotificationCenter.default.post(name: NSNotification.Name("UnpairingCompleted"), object: nil)
+    }
+    
     enum AuthError: LocalizedError {
         case noUserFound
         case invalidCode
+        case noPartnerFound
         
         var errorDescription: String? {
             switch self {
@@ -153,6 +177,8 @@ class AuthenticationManager: ObservableObject {
                 return "No user logged in"
             case .invalidCode:
                 return "Invalid or expired code"
+            case .noPartnerFound:
+                return "No paired partner found"
             }
         }
     }

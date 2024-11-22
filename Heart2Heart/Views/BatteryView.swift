@@ -5,9 +5,8 @@ struct BatteryView: View {
     let minValue: Double
     let maxValue: Double
     let isInverted: Bool
-    let averageValue: Double
+    let averageValue: Double?  // Make this optional
     let isEmpty: Bool
-    
     
     private let fillRatio: CGFloat = 0.68
     private let widthToHeightRatio: CGFloat = 0.343
@@ -18,7 +17,8 @@ struct BatteryView: View {
         return CGFloat(min(1, max(0, value / range)))
     }
     
-    private var normalizedAverageValue: CGFloat {
+    private var normalizedAverageValue: CGFloat? {
+        guard let averageValue = averageValue else { return nil }
         let range = maxValue - minValue
         let value = isInverted ? (maxValue - averageValue) : (averageValue - minValue)
         return CGFloat(min(1, max(0, value / range)))
@@ -32,38 +32,41 @@ struct BatteryView: View {
             blue: 0
         )
     }
-        
-        var body: some View {
-            GeometryReader { geometry in
-                let batteryWidth = geometry.size.height * widthToHeightRatio
+    
+    var body: some View {
+        GeometryReader { geometry in
+            let batteryWidth = geometry.size.height * widthToHeightRatio
+            
+            ZStack(alignment: .bottom) {
+                Image("Battery")
+                    .renderingMode(.template)
+                    .resizable()
+                    .scaledToFit()
                 
-                ZStack(alignment: .bottom) {
-                    Image("Battery")
-                        .renderingMode(.template)
-                        .resizable()
-                        .scaledToFit()
+                if !isEmpty {
+                    BatteryFill(
+                        height: normalizedValue * geometry.size.height * fillRatio,
+                        width: batteryWidth,
+                        fillColor: fillColor
+                    )
+                    .foregroundColor(fillColor)
+                    .padding(.bottom, geometry.size.height * 0.05)
                     
-                    if !isEmpty {
-                        BatteryFill(
-                            height: normalizedValue * geometry.size.height * fillRatio,
-                            width: batteryWidth,
-                            fillColor: fillColor
-                        )
-                        .foregroundColor(fillColor)
-                        .padding(.bottom, geometry.size.height * 0.05)
-                        
+                    // Only show average line if averageValue exists
+                    if let normalizedAverage = normalizedAverageValue {
                         CurvedDottedLine(
                             width: batteryWidth * 0.85,
-                            height: normalizedAverageValue * geometry.size.height * fillRatio,
+                            height: normalizedAverage * geometry.size.height * fillRatio,
                             text: "average"
                         )
                         .padding(.bottom, geometry.size.height * 0.06)
                     }
                 }
             }
-            .aspectRatio(widthToHeightRatio, contentMode: .fit)
         }
+        .aspectRatio(widthToHeightRatio, contentMode: .fit)
     }
+}
 
 // Preview now becomes simpler:
 //struct BatteryView_Previews: PreviewProvider {

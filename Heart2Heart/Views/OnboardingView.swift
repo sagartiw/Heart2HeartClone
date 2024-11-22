@@ -67,10 +67,12 @@ struct OnboardingView: View {
     }
     
     private func requestNotificationPermission() {
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, _ in
-            DispatchQueue.main.async {
-                currentStep += 1
+            UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, _ in
+                DispatchQueue.main.async {
+                    if authManager.isAuthenticated {
+                        currentStep += 1
+                    }
+                }
             }
         }
-    }
 }

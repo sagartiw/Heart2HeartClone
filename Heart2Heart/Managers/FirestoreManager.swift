@@ -52,7 +52,7 @@ class FirestoreManager {
             .document(userId)
             .collection(collection)
             .document(dateString)
-        
+
         try await docRef.setData([
             metric.firestoreKey: value,
             "timestamp": FieldValue.serverTimestamp()

@@ -153,24 +153,24 @@ class HealthKitManager {
     
     // MARK: - Metrics
     func getDailyMetric(_ metric: HealthMetric, for date: Date) async throws -> Double {
-        
         guard let userId = userId else {
                     throw HealthKitError.notAvailable // or create a new error type for authentication
                 }
-        
         // First check Firestore if this metric should be cached
         if metric.shouldCache {
             if let cachedValue = try await firestoreManager.getHealthData(userId: userId, metric: metric, date: date) {
+
                 return cachedValue
             }
         }
-        
         // If not in Firestore, get from HealthKit
         let value = try await fetchFromHealthKit(metric, for: date)
         
         // Store in Firestore if this metric should be cached
         if metric.shouldCache {
+
             try await firestoreManager.storeHealthData(userId: userId, metric: metric, date: date, value: value)
+
         }
         
         return value
@@ -182,7 +182,7 @@ class HealthKitManager {
         let end = calendar.date(byAdding: .day, value: 1, to: start)!
         
         let predicate = HKQuery.predicateForSamples(withStart: start, end: end)
-        
+
         // Choose statistics option based on metric type
         let options: HKStatisticsOptions
         switch metric.quantityType.identifier {
@@ -232,6 +232,7 @@ class HealthKitManager {
             from: date.dayInterval.start,
             to: date.dayInterval.end
         )
+        
         return samples.isEmpty ? 0 : total / Double(samples.count)
     }
     
@@ -240,7 +241,6 @@ class HealthKitManager {
         guard let userId = userId else {
             throw HealthKitError.notAvailable
         }
-        
         // First check Firestore cache
         if let cachedMetrics = try await firestoreManager.getSleepMetrics(userId: userId, date: date) {
             return cachedMetrics
@@ -270,7 +270,6 @@ class HealthKitManager {
         }
         
         let metrics = SleepMetrics(sleepTime: sleepTime, inBedTime: inBedTime)
-        
         // Cache the metrics in Firestore
         try await firestoreManager.storeSleepMetrics(userId: userId, date: date, metrics: metrics)
         
@@ -350,9 +349,8 @@ class HealthKitManager {
                 date: date,
                 value: elevatedTimeTotal
             )
-            
-            return elevatedTimeTotal
         
+            return elevatedTimeTotal
     }
 }
 // MARK: - Convenience Methods

@@ -4,24 +4,31 @@ import SwiftUI
 struct HomeView: View {
     @EnvironmentObject var settingsManager: SettingsManager
     @EnvironmentObject var authManager: AuthenticationManager
-    private var firestoreManager = FirestoreManager()
+    @EnvironmentObject private var healthDataProcessor: HealthDataProcessor
     
-    // User scores
-    @State private var userScore: Double = 0
-    @State private var userAverage: Double = 0
-    @State private var userMaxScore: Double = 0
-    @State private var userMinScore: Double = 0
+    private let firestoreManager = FirestoreManager()
     
-    // Partner scores
-    @State private var partnerScore: Double = 0
-    @State private var partnerAverage: Double = 0
-    @State private var partnerMaxScore: Double = 0
-    @State private var partnerMinScore: Double = 0
-    @State private var partnerName: String = "Partner"
-    
-    @State private var isLoading = true
+    @State private var userScores: [Double] = []
+    @State private var partnerScores: [Double] = []
     @State private var partnerId: String?
+    @State private var partnerName: String = "Partner"
+    @State private var isLoading = true
     @State private var showPartnerInvitation = false
+    @State private var showInitialLoadAlert = false
+    @State private var needsHistoricalCalculation = false
+
+
+
+    // Computed properties for statistics
+    private var userStats: ScoreStats {
+        ScoreStats(scores: userScores)
+    }
+    
+    private var partnerStats: ScoreStats {
+        ScoreStats(scores: partnerScores)
+    }
+    
+
     
     private let dateFormatter: DateFormatter = {
             let formatter = DateFormatter()
@@ -39,21 +46,21 @@ struct HomeView: View {
                     // Batteries HStack
                     HStack(spacing: 40) {
                         BatteryView(
-                            value: userScore,
-                            minValue: userMinScore,
-                            maxValue: userMaxScore,
+                            value: userStats.latest,
+                            minValue: userStats.min,
+                            maxValue: userStats.max,
                             isInverted: false,
-                            averageValue: userAverage,
+                            averageValue: userStats.average,
                             isEmpty: false
                         )
                         .frame(height: 400)
                         
                         BatteryView(
-                            value: partnerId != nil ? partnerScore : 0,
-                            minValue: partnerId != nil ? partnerMinScore : 0,
-                            maxValue: partnerId != nil ? partnerMaxScore : 100,
+                            value: partnerId != nil ? partnerStats.latest : 0,
+                            minValue: partnerId != nil ? partnerStats.min : 0,
+                            maxValue: partnerId != nil ? partnerStats.max : 100,
                             isInverted: false,
-                            averageValue: partnerId != nil ? partnerAverage : 0,
+                            averageValue: partnerId != nil ? partnerStats.average : 0,
                             isEmpty: partnerId == nil
                         )
                         .frame(height: 400)
@@ -66,7 +73,7 @@ struct HomeView: View {
                         VStack(spacing: 5) {
                             HStack(spacing: 20) {
                                 VStack {
-                                    Text("\(Int(userScore.normalized(min: userMinScore, max: userMaxScore)))%")
+                                    Text("\(Int(userStats.latest.normalized(min: userStats.min, max: userStats.max)))%")
                                         .font(.subheadline)
                                     Text("Today")
                                         .font(.caption)
@@ -74,7 +81,7 @@ struct HomeView: View {
                                 }
                                 
                                 VStack {
-                                    Text("\(Int(userAverage.normalized(min: userMinScore, max: userMaxScore)))%")
+                                    Text("\(Int(userStats.average.normalized(min: userStats.min, max: userStats.max)))%")
                                         .font(.subheadline)
                                     Text("Average")
                                         .font(.caption)
@@ -93,7 +100,7 @@ struct HomeView: View {
                             if partnerId != nil {
                                 HStack(spacing: 20) {
                                     VStack {
-                                        Text("\(Int(partnerScore.normalized(min: partnerMinScore, max: partnerMaxScore)))%")
+                                        Text("\(Int(partnerStats.latest.normalized(min: partnerStats.min, max: partnerStats.max)))%")
                                             .font(.subheadline)
                                         Text("Today")
                                             .font(.caption)
@@ -101,7 +108,7 @@ struct HomeView: View {
                                     }
                                     
                                     VStack {
-                                        Text("\(Int(partnerAverage.normalized(min: partnerMinScore, max: partnerMaxScore)))%")
+                                        Text("\(Int(partnerStats.average.normalized(min: partnerStats.min, max: partnerStats.max)))%")
                                             .font(.subheadline)
                                         Text("Average")
                                             .font(.caption)
@@ -136,8 +143,7 @@ struct HomeView: View {
                 }
             }
         .task {
-            await loadPartnerInfo()
-            await loadScores()
+            await loadData()
         }
             
             .navigationBarTitleDisplayMode(.inline)
@@ -161,122 +167,95 @@ struct HomeView: View {
                     }
                 }
             }
+            .alert("Initial Setup", isPresented: $showInitialLoadAlert) {
+                Button("OK") { }
+            } message: {
+                Text("Loading scores for the first time can take a few minutes, so please keep the app open. Don't worry if you need to close it though, it'll pick up where it left off next time.")
+            }
         }
     }
     
         
-        private func loadPartnerInfo() async {
-            guard let currentUserId = authManager.user?.uid else {
-                print("No user logged in")
-                return
-            }
-            
-            do {
-                let (partnerId, _) = try await firestoreManager.getUserData(userId: currentUserId)
-                
-                if let partnerId = partnerId {
-                    let (_, partnerName) = try await firestoreManager.getUserData(userId: partnerId)
-                    
-                    await MainActor.run {
-                        self.partnerId = partnerId
-                        self.partnerName = partnerName ?? "Partner"
-                    }
-                } else {
-                    await MainActor.run {
-                        self.partnerId = nil
-                        self.partnerName = "Partner"
-                    }
-                }
-            } catch {
-                print("Error loading partner info: \(error)")
-                await MainActor.run {
-                    self.partnerId = nil
-                    self.partnerName = "Partner"
-                }
-            }
+    private func loadData() async {
+        guard let userId = authManager.user?.uid else { return }
+        
+        // Load partner info
+        if let (partnerId, partnerName) = try? await firestoreManager.getUserData(userId: userId) {
+            self.partnerId = partnerId
+            self.partnerName = partnerName ?? "Partner"
         }
         
-    func loadScores() async {
-        guard let currentUserId = authManager.user?.uid else {
-            print("No user logged in")
-            await MainActor.run {
-                isLoading = false
-            }
-            return
-        }
-        
-        await MainActor.run {
-            isLoading = true
-        }
-        
-        let today = Date()
         let days = settingsManager.settings.averagingPeriodDays
+        let today = Date()
+        let calendar = Calendar.current
         
-        // Load user scores
-        let userResults = await loadUserScores(userId: currentUserId, days: days, today: today)
-        
-        // Load partner scores if partner exists
-        let partnerResults: (latest: Double?, average: Double, max: Double, min: Double)
-        if let partnerId = partnerId {
-            partnerResults = await loadUserScores(userId: partnerId, days: days, today: today)
+        // Check if oldest required day has data
+        let oldestDate = calendar.date(byAdding: .day, value: -days, to: today)!
+        if let _ = try? await firestoreManager.getComputedData(userId: userId, metric: .bandwidth, date: oldestDate) {
+            // Data exists for oldest date, proceed normally
+            needsHistoricalCalculation = false
         } else {
-            partnerResults = (latest: nil, average: 0, max: 0, min: 0)
-        }
-        
-        await MainActor.run {
-            // Update user scores
-            userScore = userResults.latest ?? 0
-            userAverage = userResults.average
-            userMaxScore = userResults.max
-            userMinScore = userResults.min
-            
-            // Update partner scores
-            if partnerId != nil {
-                partnerScore = partnerResults.latest ?? 0
-                partnerAverage = partnerResults.average
-                partnerMaxScore = partnerResults.max
-                partnerMinScore = partnerResults.min
-            } else {
-                partnerScore = 0
-                partnerAverage = 0
-                partnerMaxScore = 100
-                partnerMinScore = 0
+            // Need to calculate historical data
+            needsHistoricalCalculation = true
+            await MainActor.run {
+                showInitialLoadAlert = true
             }
-            
-            isLoading = false
         }
-    }
-        private func loadUserScores(userId: String, days: Int, today: Date) async -> (latest: Double?, average: Double, max: Double, min: Double) {
-            let calendar = Calendar.current
-            var scores: [Double] = []
-            var latest: Double?
             
-            for i in 0..<days {
-                let date = calendar.date(byAdding: .day, value: -days + i, to: today)!
-                
-                do {
-                    if let score = try await firestoreManager.getComputedData(
-                        userId: userId,
-                        metric: .bandwidth,
-                        date: date
-                    ) {
-                        scores.append(score)
-                        latest = score
+            // Load user scores
+            var userScores: [Double] = []
+            for daysAgo in 0...days {
+                let date = calendar.date(byAdding: .day, value: -daysAgo, to: today)!
+                if let score = try? await firestoreManager.getComputedData(userId: userId, metric: .bandwidth, date: date) {
+                    userScores.append(score)
+                } else {
+                    // Calculate and store if missing
+                    let calculatedScore = try? await healthDataProcessor.calculateBandwidthScore(for: date)
+                    if let score = calculatedScore {
+                        try? await firestoreManager.storeComputedData(
+                            userId: userId,
+                            metric: .bandwidth,
+                            date: date,
+                            value: score
+                        )
+                        userScores.append(score)
                     }
-                } catch {
-                    print("Error loading scores for date \(date): \(error)")
                 }
             }
             
-            guard !scores.isEmpty else {
-                return (nil, 0, 0, 0)
+            // Load partner scores (fetch only)
+            var partnerScores: [Double] = []
+            if let partnerId = partnerId {
+                for daysAgo in 0...days {
+                    let date = calendar.date(byAdding: .day, value: -daysAgo, to: today)!
+                    if let score = try? await firestoreManager.getComputedData(userId: partnerId, metric: .bandwidth, date: date) {
+                        partnerScores.append(score)
+                    }
+                }
             }
             
-            let average = scores.reduce(0, +) / Double(scores.count)
-            let maxScore = scores.max() ?? 0
-            let minScore = scores.min() ?? 0
-            
-            return (latest, average, maxScore, minScore)
+            // Update UI
+            await MainActor.run {
+                self.userScores = userScores
+                self.partnerScores = partnerScores
+                self.isLoading = false
+            }
         }
     }
+
+    // Helper struct for score statistics
+    struct ScoreStats {
+        let latest: Double
+        let average: Double
+        let max: Double
+        let min: Double
+        
+        init(scores: [Double]) {
+            self.latest = scores.first ?? 0
+            self.average = scores.isEmpty ? 0 : scores.reduce(0, +) / Double(scores.count)
+            self.max = scores.max() ?? 100
+            self.min = scores.min() ?? 0
+        }
+    }
+
 

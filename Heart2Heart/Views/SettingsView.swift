@@ -9,7 +9,11 @@ struct SettingsView: View {
     @State private var showAlert = false
     @State private var alertMessage = ""
     @State private var isSuccess = false
+    @State private var showUnpairAlert = false
+
+    
     @EnvironmentObject var authManager: AuthenticationManager
+    
     
     static let displayNames: [String: String] = [
         "sleep": "Sleep",
@@ -60,6 +64,31 @@ struct SettingsView: View {
                 }
                 
                 saveButton
+                
+                Section {
+                    Button(action: {
+                        showUnpairAlert = true
+                    }) {
+                        HStack {
+                            Spacer()
+                            Text("Unpair Account")
+                                .foregroundColor(.red)
+                                .fontWeight(.medium)
+                            Spacer()
+                        }
+                    }
+                }
+                .alert("Confirm Unpair", isPresented: $showUnpairAlert) {
+                    Button("Cancel", role: .cancel) { }
+                    Button("Unpair", role: .destructive) {
+                        Task {
+                            try await authManager.unpairUsers()
+                        }
+                    }
+                } message: {
+                    Text("Are you sure you want to unpair? You would have to reinvite them to pair again.")
+                }
+                
             }
             .navigationTitle("Settings")
             .toolbar {
