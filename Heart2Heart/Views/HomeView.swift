@@ -5,6 +5,9 @@ struct HomeView: View {
     @EnvironmentObject var settingsManager: SettingsManager
     @EnvironmentObject var authManager: AuthenticationManager
     @EnvironmentObject private var healthDataProcessor: HealthDataProcessor
+    @AppStorage("hasShownInitialLoadAlert") private var hasShownInitialLoadAlert = false
+
+
     
     private let firestoreManager = FirestoreManager()
     
@@ -142,6 +145,9 @@ struct HomeView: View {
                         .progressViewStyle(CircularProgressViewStyle())
                 }
             }
+            .sheet(isPresented: $showPartnerInvitation) {
+                    PartnerInvitationView(isPresented: $showPartnerInvitation)
+                }
         .task {
             await loadData()
         }
@@ -170,7 +176,7 @@ struct HomeView: View {
             .alert("Initial Setup", isPresented: $showInitialLoadAlert) {
                 Button("OK") { }
             } message: {
-                Text("Loading scores for the first time can take a few minutes, so please keep the app open. Don't worry if you need to close it though, it'll pick up where it left off next time.")
+                Text("Loading scores for the first time can take a minute or two. Please keep this tab open!")
             }
         }
     }
@@ -180,7 +186,7 @@ struct HomeView: View {
         guard let userId = authManager.user?.uid else { return }
         
         // Load partner info
-        if let (partnerId, partnerName) = try? await firestoreManager.getUserData(userId: userId) {
+        if let (partnerId, partnerName) = try? await firestoreManager.getPartnerData(userId: userId) {
             self.partnerId = partnerId
             self.partnerName = partnerName ?? "Partner"
         }
@@ -189,59 +195,70 @@ struct HomeView: View {
         let today = Date()
         let calendar = Calendar.current
         
+        // Determine if we should show today's or yesterday's score
+        let currentHour = calendar.component(.hour, from: today)
+        let startIndex = currentHour >= 16 ? 0 : 1 // Start from today if after 4 PM, otherwise yesterday
+        
         // Check if oldest required day has data
         let oldestDate = calendar.date(byAdding: .day, value: -days, to: today)!
         if let _ = try? await firestoreManager.getComputedData(userId: userId, metric: .bandwidth, date: oldestDate) {
-            // Data exists for oldest date, proceed normally
             needsHistoricalCalculation = false
         } else {
-            // Need to calculate historical data
             needsHistoricalCalculation = true
-            await MainActor.run {
-                showInitialLoadAlert = true
+            if !hasShownInitialLoadAlert {
+                await MainActor.run {
+                    showInitialLoadAlert = true
+                    hasShownInitialLoadAlert = true
+                }
             }
         }
-            
-            // Load user scores
-            var userScores: [Double] = []
-            for daysAgo in 0...days {
-                let date = calendar.date(byAdding: .day, value: -daysAgo, to: today)!
-                if let score = try? await firestoreManager.getComputedData(userId: userId, metric: .bandwidth, date: date) {
+        
+        // Calculate baseline once if needed
+        let baselineMetrics = needsHistoricalCalculation ?
+            try? await healthDataProcessor.getBaselineMetrics() : nil
+        
+        // Load user scores
+        var userScores: [Double] = []
+        for daysAgo in startIndex...(days + startIndex) {
+            let date = calendar.date(byAdding: .day, value: -daysAgo, to: today)!
+            if let score = try? await firestoreManager.getComputedData(userId: userId, metric: .bandwidth, date: date) {
+                userScores.append(score)
+            } else {
+                // Calculate and store if missing, using the cached baseline
+                let calculatedScore = try? await healthDataProcessor.calculateBandwidthScore(
+                    for: date,
+                    baselineMetrics: healthDataProcessor.getBaselineMetrics()
+                )
+                if let score = calculatedScore {
+                    try? await firestoreManager.storeComputedData(
+                        userId: userId,
+                        metric: .bandwidth,
+                        date: date,
+                        value: score
+                    )
                     userScores.append(score)
-                } else {
-                    // Calculate and store if missing
-                    let calculatedScore = try? await healthDataProcessor.calculateBandwidthScore(for: date)
-                    if let score = calculatedScore {
-                        try? await firestoreManager.storeComputedData(
-                            userId: userId,
-                            metric: .bandwidth,
-                            date: date,
-                            value: score
-                        )
-                        userScores.append(score)
-                    }
                 }
-            }
-            
-            // Load partner scores (fetch only)
-            var partnerScores: [Double] = []
-            if let partnerId = partnerId {
-                for daysAgo in 0...days {
-                    let date = calendar.date(byAdding: .day, value: -daysAgo, to: today)!
-                    if let score = try? await firestoreManager.getComputedData(userId: partnerId, metric: .bandwidth, date: date) {
-                        partnerScores.append(score)
-                    }
-                }
-            }
-            
-            // Update UI
-            await MainActor.run {
-                self.userScores = userScores
-                self.partnerScores = partnerScores
-                self.isLoading = false
             }
         }
-    }
+        
+        // Load partner scores (fetch only)
+        var partnerScores: [Double] = []
+        if let partnerId = partnerId {
+            for daysAgo in startIndex...(days + startIndex) {
+                let date = calendar.date(byAdding: .day, value: -daysAgo, to: today)!
+                if let score = try? await firestoreManager.getComputedData(userId: partnerId, metric: .bandwidth, date: date) {
+                    partnerScores.append(score)
+                }
+            }
+        }
+        
+        // Update UI
+        await MainActor.run {
+            self.userScores = userScores
+            self.partnerScores = partnerScores
+            self.isLoading = false
+        }
+    }    }
 
     // Helper struct for score statistics
     struct ScoreStats {

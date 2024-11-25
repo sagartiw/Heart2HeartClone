@@ -10,7 +10,7 @@ struct SmallBatteryView: View {
     let isEmpty: Bool
     let isGray: Bool
     
-    private let fillRatio: CGFloat = 0.77  // Increased from 0.57
+    private let fillRatio: CGFloat = 0.73  // Increased from 0.57
     private let widthToHeightRatio: CGFloat = 0.45
     private let fillOffsetRatio: CGFloat = 0.08
     

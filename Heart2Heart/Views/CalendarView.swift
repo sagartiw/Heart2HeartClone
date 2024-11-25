@@ -195,10 +195,10 @@ struct CalendarView: View {
         while date >= interval.start {
             if date < today {
                 do {
-                    let score = try await healthDataProcessor.calculateBandwidthScore(for: date)
+                    let score = try await firestoreManager.getComputedData(userId: authManager.user?.uid ?? "", metric: .bandwidth, date: date)
                     dailyValues[date] = score
                 } catch {
-                    print("Error calculating Bandwidth score for \(date): \(error)")
+                    print("Error getting Bandwidth score for \(date): \(error)")
                 }
             }
             date = calendar.date(byAdding: .day, value: -1, to: date) ?? date
@@ -214,7 +214,11 @@ struct CalendarView: View {
         
         while date < interval.end {
             if date < today {
-                if let score = try? await healthDataProcessor.calculateBandwidthScore(for: date) {
+                if let score = try? await firestoreManager.getComputedData(
+                    userId: authManager.user?.uid ?? "",
+                    metric: .bandwidth,
+                    date: date
+                ) {
                     allValues.append(score)
                 }
             }
@@ -244,7 +248,7 @@ struct CalendarView: View {
         
         for metric in metrics {
             if let value = try? await firestoreManager.getComputedData(
-                userId: authManager.user?.uid ?? "",  // Make sure to use .uid here
+                userId: authManager.user?.uid ?? "",
                 metric: metric,
                 date: date
             ) {
@@ -323,7 +327,7 @@ struct DayCell: View {
                 VStack {
                     Text("\(Calendar.current.component(.day, from: date))")
                         .font(.custom("KulimPark-SemiBold", size: 8))
-                    if value > 0 {
+                    if value != 0 {
                         Text(formatValue())
                             .font(.custom("KulimPark-SemiBold", size: 8))
                             .foregroundColor(.gray)

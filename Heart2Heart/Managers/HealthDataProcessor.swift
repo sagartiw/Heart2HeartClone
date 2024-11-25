@@ -37,7 +37,7 @@ final class HealthDataProcessor : ObservableObject {
     }
     
     // MARK: - Properties
-    private struct Metrics: Sendable {
+    public struct Metrics: Sendable {
         let hrv: Double
         let rhr: Double
         let sleepTime: TimeInterval
@@ -73,50 +73,52 @@ final class HealthDataProcessor : ObservableObject {
     }
 
     // MARK: - Public Methods
+    
     func calculateWindowAverage(for metric: HealthMetric, days: Int) async -> Double {
         let values = await fetchMetricValues(for: metric, days: days)
         return values.isEmpty ? 0 : values.reduce(0, +) / Double(values.count)
     }
     
-    func calculateBandwidthScore(for date: Date) async throws -> Double {
+    func calculateBandwidthScore(
+        for date: Date,
+        baselineMetrics: Metrics? = nil
+    ) async throws -> Double {
         guard let userId = authManager.user?.uid else {
             throw AuthError.userNotAuthenticated
         }
-
+        
         let calendar = Calendar.current
         let startOfDay = calendar.startOfDay(for: date)
-        
-        // Check for cached final score
-        if let cachedScore = try await firestoreManager.getComputedData(
-            userId: userId,
-            metric: .bandwidth,
-            date: startOfDay
-        ) {
-            return cachedScore
+
+        // Get baseline metrics
+        let baseline: Metrics
+        if let providedBaseline = baselineMetrics {
+            baseline = providedBaseline
+        } else {
+            baseline = try await getBaselineMetrics()
         }
+
         let weights = settingsManager.settings
         var components: [Double] = []
 
-        // Calculate heart rate component
         if weights.isHeartRateEnabled {
             let heartRateScore = try await calculateHeartRateComponent(
                 for: startOfDay,
-                userId: userId
+                userId: userId,
+                baseline: baseline
             )
             components.append(heartRateScore * weights.mainWeights["heartRate"]!)
         }
         
-        // Calculate exercise component
         if weights.isExerciseEnabled {
             let exerciseScore = try await calculateExerciseComponent(
                 for: startOfDay,
-                userId: userId
+                userId: userId,
+                baseline: baseline
             )
             components.append(exerciseScore * weights.mainWeights["exercise"]!)
         }
         
-
-        // Calculate sleep component
         if weights.isSleepEnabled {
             let sleepScore = try await calculateSleepComponent(
                 for: startOfDay,
@@ -127,22 +129,26 @@ final class HealthDataProcessor : ObservableObject {
         
         let finalScore = components.reduce(0, +)/100.0
         
-        // Cache the final score
         try await firestoreManager.storeComputedData(
-                userId: userId,
-                metric: .bandwidth,
-                date: startOfDay,
-                value: finalScore
-            )
+            userId: userId,
+            metric: .bandwidth,
+            date: startOfDay,
+            value: finalScore
+        )
             
-            return finalScore
+        return finalScore
     }
     
     private enum AuthError: Error {
             case userNotAuthenticated
         }
 
-    private func calculateHeartRateComponent(for date: Date, userId: String) async throws -> Double {
+    private func calculateHeartRateComponent(
+        for date: Date,
+        userId: String,
+        baseline: Metrics
+    ) async throws -> Double {
+        
         let calendar = Calendar.current
         let weights = settingsManager.settings.recentDaysWeights
         
@@ -150,19 +156,18 @@ final class HealthDataProcessor : ObservableObject {
 
 
         // Check cache first
-        if let cached = try await firestoreManager.getComputedData(
-            userId: userId,
-            metric: .heartRateComponent,
-            date: date
-        ) {
-            return cached
-        }
+//        if let cached = try await firestoreManager.getComputedData(
+//            userId: userId,
+//            metric: .heartRateComponent,
+//            date: date
+//        ) {
+//            return cached
+//        }
 
         var weightedSum = 0.0
         for daysAgo in 0...2 {
             let dayDate = calendar.date(byAdding: .day, value: -daysAgo, to: date) ?? date
             let metrics = try await getCurrentMetrics(for: dayDate)
-            let baseline = try await getBaselineMetrics()
 
             let dayWeight = daysAgo == 0 ? weights["currentDay"] :
                            daysAgo == 1 ? weights["yesterday"] :
@@ -192,24 +197,27 @@ final class HealthDataProcessor : ObservableObject {
         return weightedSum
     }
     
-    private func calculateExerciseComponent(for date: Date, userId: String) async throws -> Double {
+    private func calculateExerciseComponent(
+        for date: Date,
+        userId: String,
+        baseline: Metrics
+    ) async throws -> Double {
         let calendar = Calendar.current
         let weights = settingsManager.settings.recentDaysWeights
         
         // Check cache first
-        if let cached = try await firestoreManager.getComputedData(
-            userId: userId,
-            metric: .exerciseComponent,
-            date: date
-        ) {
-            return cached
-        }
+//        if let cached = try await firestoreManager.getComputedData(
+//            userId: userId,
+//            metric: .exerciseComponent,
+//            date: date
+//        ) {
+//            return cached
+//        }
         
         var weightedSum = 0.0
         for daysAgo in 0...2 {
             let dayDate = calendar.date(byAdding: .day, value: -daysAgo, to: date) ?? date
             let metrics = try await getCurrentMetrics(for: dayDate)
-            let baseline = try await getBaselineMetrics()
             
             let dayWeight = daysAgo == 0 ? weights["currentDay"] :
                            daysAgo == 1 ? weights["yesterday"] :
@@ -248,13 +256,13 @@ final class HealthDataProcessor : ObservableObject {
         let weights = settingsManager.settings.recentDaysWeights
         
         // Check cache first
-        if let cached = try await firestoreManager.getComputedData(
-            userId: userId,
-            metric: .sleepComponent,
-            date: date
-        ) {
-            return cached
-        }
+//        if let cached = try await firestoreManager.getComputedData(
+//            userId: userId,
+//            metric: .sleepComponent,
+//            date: date
+//        ) {
+//            return cached
+//        }
         
         var weightedSum = 0.0
         for daysAgo in 0...2 {
@@ -301,7 +309,7 @@ final class HealthDataProcessor : ObservableObject {
     }
     
     
-    private func getBaselineMetrics() async throws -> Metrics {
+    public func getBaselineMetrics() async throws -> Metrics {
         let days = settingsManager.settings.averagingPeriodDays
         
         async let hrv = calculateWindowAverage(for: .heartRateVariability, days: days)
@@ -418,6 +426,8 @@ final class HealthDataProcessor : ObservableObject {
         }
     
     }
+
+
 
 
 

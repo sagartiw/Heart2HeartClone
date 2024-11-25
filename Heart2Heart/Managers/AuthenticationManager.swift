@@ -1,5 +1,6 @@
 import Firebase
 import FirebaseAuth
+import FirebaseMessaging
 
 class AuthenticationManager: ObservableObject {
     @Published var user: User?
@@ -9,6 +10,7 @@ class AuthenticationManager: ObservableObject {
     
     init() {
         validateCurrentUser()
+        
         
         Auth.auth().addStateDidChangeListener { [weak self] _, user in
             DispatchQueue.main.async {
@@ -22,8 +24,12 @@ class AuthenticationManager: ObservableObject {
         self.isAuthenticated = user != nil
         
         if let user = user {
-            let hasCompletedOnboarding = UserDefaults.standard.bool(forKey: "hasCompletedOnboarding_\(user.uid)")
-            self.isOnboarding = !hasCompletedOnboarding
+            let key = "hasCompletedOnboarding_\(user.uid)"
+            if !UserDefaults.standard.bool(forKey: key) {
+                self.isOnboarding = true
+            } else {
+                self.isOnboarding = false
+            }
         }
     }
     
@@ -36,11 +42,15 @@ class AuthenticationManager: ObservableObject {
         // Get current timezone identifier
         let timezone = TimeZone.current.identifier
         
+        // Get FCM token if available
+        let fcmToken = Messaging.messaging().fcmToken
+        
         try await db.collection("users").document(result.user.uid).setData([
             "email": email,
             "name": name,
             "createdAt": FieldValue.serverTimestamp(),
-            "invitationCode:": ""
+            "invitationCode": "",
+            "fcmToken": fcmToken ?? ""
         ])
         
         await MainActor.run {
@@ -55,10 +65,29 @@ class AuthenticationManager: ObservableObject {
         UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding_\(userId)")
         self.isOnboarding = false
     }
+    
+    func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
+        guard let token = fcmToken,
+              let userId = Auth.auth().currentUser?.uid else { return }
+        
+        Task {
+            try await db.collection("users")
+                .document(userId)
+                .updateData(["fcmToken": token])
+        }
+    }
 
     @MainActor
     func signIn(email: String, password: String) async throws {
         let result = try await Auth.auth().signIn(withEmail: email, password: password)
+        
+        // Get FCM token and store it
+        if let fcmToken = Messaging.messaging().fcmToken {
+            try await db.collection("users")
+                .document(result.user.uid)
+                .updateData(["fcmToken": fcmToken])
+        }
+        
         self.user = result.user
     }
     

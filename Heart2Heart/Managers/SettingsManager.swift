@@ -6,30 +6,30 @@ class SettingsManager: ObservableObject {
     private var savedSettings: Settings // Keep track of last saved settings
     
     
-    struct Settings: Codable, Equatable {  
-            var isSleepEnabled = false
-            var isExerciseEnabled = true
-            var isHeartRateEnabled = true
-            var mainWeights: [String: Double]
-            var recentDaysWeights: [String: Double]
-            var exerciseWeights: [String: Double]
-            var heartRateWeights: [String: Double]
-            var elevatedHeartRateThreshold = 75.0
-            var averagingPeriodDays: Int = 30
-            
-            static func == (lhs: Settings, rhs: Settings) -> Bool {
-                return lhs.isSleepEnabled == rhs.isSleepEnabled &&
-                       lhs.isExerciseEnabled == rhs.isExerciseEnabled &&
-                       lhs.isHeartRateEnabled == rhs.isHeartRateEnabled &&
-                       lhs.mainWeights == rhs.mainWeights &&
-                       lhs.recentDaysWeights == rhs.recentDaysWeights &&
-                       lhs.exerciseWeights == rhs.exerciseWeights &&
-                       lhs.heartRateWeights == rhs.heartRateWeights &&
-                       lhs.elevatedHeartRateThreshold == rhs.elevatedHeartRateThreshold
-            }
+    struct Settings: Codable, Equatable {
+        var isSleepEnabled = false
+        var isExerciseEnabled = true
+        var isHeartRateEnabled = true
+        var mainWeights: [String: Double]
+        var recentDaysWeights: [String: Double]
+        var exerciseWeights: [String: Double]
+        var heartRateWeights: [String: Double]
+        var elevatedHeartRateThreshold = 75.0
+        var averagingPeriodDays: Int = 30
+        
+        static func == (lhs: Settings, rhs: Settings) -> Bool {
+            return lhs.isSleepEnabled == rhs.isSleepEnabled &&
+            lhs.isExerciseEnabled == rhs.isExerciseEnabled &&
+            lhs.isHeartRateEnabled == rhs.isHeartRateEnabled &&
+            lhs.mainWeights == rhs.mainWeights &&
+            lhs.recentDaysWeights == rhs.recentDaysWeights &&
+            lhs.exerciseWeights == rhs.exerciseWeights &&
+            lhs.heartRateWeights == rhs.heartRateWeights &&
+            lhs.elevatedHeartRateThreshold == rhs.elevatedHeartRateThreshold
+        }
         
         static let `default` = Settings(
-            mainWeights: ["sleep": 50, "exercise": 30, "heartRate": 20],
+            mainWeights: ["sleep": 0, "exercise": 60, "heartRate": 40],
             recentDaysWeights: ["currentDay": 70, "yesterday": 20, "twoDaysAgo": 10],
             exerciseWeights: ["minutes": 50, "calories": 30, "steps": 20],
             heartRateWeights: ["elevated": 40, "variability": 35, "resting": 25],
@@ -38,40 +38,40 @@ class SettingsManager: ObservableObject {
     }
     
     init() {
-            if let data = UserDefaults.standard.data(forKey: "settings"),
-               let decoded = try? JSONDecoder().decode(Settings.self, from: data) {
-                self.settings = decoded
-                self.savedSettings = decoded
-            } else {
-                self.settings = .default
-                self.savedSettings = .default
-            }
+        if let data = UserDefaults.standard.data(forKey: "settings"),
+           let decoded = try? JSONDecoder().decode(Settings.self, from: data) {
+            self.settings = decoded
+            self.savedSettings = decoded
+        } else {
+            self.settings = .default
+            self.savedSettings = .default
         }
-        
+    }
+    
     func saveSettings() -> (Bool, String) {
-            let (isValid, message) = validateWeights()
-            
-            if isValid {
-                if let encoded = try? JSONEncoder().encode(settings) {
-                    UserDefaults.standard.set(encoded, forKey: "settings")
-                    savedSettings = settings
-                    objectWillChange.send()
-                }
-            } else {
-                settings = savedSettings
+        let (isValid, message) = validateWeights()
+        
+        if isValid {
+            if let encoded = try? JSONEncoder().encode(settings) {
+                UserDefaults.standard.set(encoded, forKey: "settings")
+                savedSettings = settings
                 objectWillChange.send()
             }
-            
-            return (isValid, message)
+        } else {
+            settings = savedSettings
+            objectWillChange.send()
         }
+        
+        return (isValid, message)
+    }
     
-        
-        func resetToDefaults() {
-            settings = .default
-            saveSettings() // Save default settings
-            redistributeMainWeights()
-        }
-        
+    
+    func resetToDefaults() {
+        settings = .default
+        saveSettings() // Save default settings
+        redistributeMainWeights()
+    }
+    
     
     func handleCategoryToggle() {
         redistributeMainWeights()
@@ -129,25 +129,38 @@ class SettingsManager: ObservableObject {
     }
     
     func validateWeights() -> (Bool, String) {
-        let mainSum = settings.mainWeights.values.reduce(0, +)
-        let recentSum = settings.recentDaysWeights.values.reduce(0, +)
-        let exerciseSum = settings.exerciseWeights.values.reduce(0, +)
-        let heartRateSum = settings.heartRateWeights.values.reduce(0, +)
+        let enabledMainSum = settings.mainWeights.filter { key, _ in
+            switch key {
+            case "sleep": return settings.isSleepEnabled
+            case "exercise": return settings.isExerciseEnabled
+            case "heartRate": return settings.isHeartRateEnabled
+            default: return false
+            }
+        }.values.reduce(0, +)
         
-        if abs(mainSum - 100) > 0.1 {
-            return (false, "Main category weights must sum to 100%")
+        if abs(enabledMainSum - 100) > 0.1 {
+            return (false, "Enabled main category weights must sum to 100%")
         }
         
+        // Recent days always need to sum to 100%
+        let recentSum = settings.recentDaysWeights.values.reduce(0, +)
         if abs(recentSum - 100) > 0.1 {
             return (false, "Recent days weights must sum to 100%")
         }
         
-        if settings.isExerciseEnabled && abs(exerciseSum - 100) > 0.1 {
-            return (false, "Exercise weights must sum to 100%")
+        // Only validate enabled subcategories
+        if settings.isExerciseEnabled {
+            let exerciseSum = settings.exerciseWeights.values.reduce(0, +)
+            if abs(exerciseSum - 100) > 0.1 {
+                return (false, "Exercise weights must sum to 100%")
+            }
         }
         
-        if settings.isHeartRateEnabled && abs(heartRateSum - 100) > 0.1 {
-            return (false, "Heart rate weights must sum to 100%")
+        if settings.isHeartRateEnabled {
+            let heartRateSum = settings.heartRateWeights.values.reduce(0, +)
+            if abs(heartRateSum - 100) > 0.1 {
+                return (false, "Heart rate weights must sum to 100%")
+            }
         }
         
         return (true, "Settings saved successfully")

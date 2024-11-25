@@ -2,20 +2,25 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.Jackson.Heart2Heart.dailyTask</string>
+	</array>
 	<key>UIAppFonts</key>
 	<array>
 		<string>KulimPark-SemiBold.ttf</string>
 	</array>
-    <key>BGTaskSchedulerPermittedIdentifiers</key>
-    <array>
-        <string>com.Heart2Heart.refreshData</string>
-    </array>
-    <key>UIBackgroundModes</key>
-    <array>
-        <string>fetch</string>
-        <string>processing</string>
-        <string>remote-notification</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>processing</string>
+		<string>remote-notification</string>
+        <string>health-kit</string>
 
-    </array>
+	</array>
+    <key>NSHealthShareUsageDescription</key>
+    <string>Heart2Heart needs access to your health data to calculate your daily scores</string>
+    <key>NSHealthUpdateUsageDescription</key>
+    <string>Heart2Heart needs access to your health data to calculate your daily scores</string>
 </dict>
 </plist>

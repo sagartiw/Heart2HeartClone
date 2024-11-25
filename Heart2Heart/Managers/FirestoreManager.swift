@@ -20,7 +20,7 @@ class FirestoreManager {
         return formatter
     }()
     
-    func getUserData(userId: String) async throws -> (partnerId: String?, name: String?) {
+    func getPartnerData(userId: String) async throws -> (partnerId: String?, name: String?) {
         guard !userId.isEmpty else {
             throw FirestoreError.invalidUserId
         }
@@ -29,8 +29,18 @@ class FirestoreManager {
             .document(userId)
             .getDocument()
         
-        let data = document.data()
-        return (data?["pairedWith"] as? String, data?["name"] as? String)
+        let partnerId = document.data()?["pairedWith"] as? String
+        
+        // If there's a partnerId, fetch their name from their document
+        var partnerName: String? = nil
+        if let partnerId = partnerId {
+            let partnerDoc = try await db.collection("users")
+                .document(partnerId)
+                .getDocument()
+            partnerName = partnerDoc.data()?["name"] as? String
+        }
+        
+        return (partnerId, partnerName)
     }
     
     // Generic method to get data for any metric type
@@ -102,14 +112,7 @@ class FirestoreManager {
         return SleepMetrics(sleepTime: sleepTime, inBedTime: 0)
     }
     
-        func getUserTimezone(userId: String) async throws -> String? {
-            let document = try await db.collection("users")
-                .document(userId)
-                .getDocument()
-            
-            return document.data()?["timezone"] as? String
-        
-    }
+    
 }
 protocol StorableMetric {
     var firestoreKey: String { get }

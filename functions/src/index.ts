@@ -1,46 +1,155 @@
-/* functions/src/index.ts */
-import * as functions from "firebase-functions/v2";
+import * as functions from "firebase-functions/v1";
 import * as admin from "firebase-admin";
 
 admin.initializeApp();
 
-exports.createDailyTask = functions.scheduler.onSchedule(
-    {
-        schedule: "30 * * * *",
-        timeZone: "UTC",
-    },
-    async () => {
+const invalidTokenCodes = [
+    "messaging/invalid-registration-token",
+    "messaging/registration-token-not-registered",
+];
+
+export const scheduleDailyTask = functions.pubsub
+    .schedule("*/2 * * * *")
+    .timeZone("America/New_York")
+    .onRun(async () => {
         try {
-            const db = admin.firestore();
+            const usersSnapshot = await admin.firestore()
+                .collection("users")
+                .where("fcmToken", "!=", null)
+                .get();
 
-            // Delete existing tasks
-            const tasksSnapshot = await db.collection("dailyTasks").get();
-            const deletePromises = tasksSnapshot.docs.map((doc) => (
-                doc.ref.delete()
-            ));
-            await Promise.all(deletePromises);
+            const notifications = usersSnapshot.docs.map(async (userDoc) => {
+                const userData = userDoc.data();
+                const token = userData.fcmToken;
 
-            // Get all users
-            const usersSnapshot = await db.collection("users").get();
+                if (!token) return;
 
-            // Create a task for each user
-            const taskPromises = usersSnapshot.docs.map((userDoc) => (
-                db.collection("dailyTasks").add({
-                    userId: userDoc.id,
-                    timestamp: admin.firestore.Timestamp.now(),
-                    status: "pending",
-                    createdAt: admin.firestore.FieldValue.serverTimestamp(),
-                })
-            ));
+                const message = {
+                    token,
+                    notification: {
+                        title: "Daily Health Check",
+                        body: "Time to process your daily health data",
+                    },
+                    data: {
+                        type: "dailyTask",
+                        timestamp: Date.now().toString(),
+                    },
+                    apns: {
+                        payload: {
+                            aps: {
+                                "content-available": 1,
+                                "mutable-content": 1,
+                            },
+                        },
+                        headers: {
+                            "apns-push-type": "background",
+                            "apns-priority": "5",
+                            "apns-topic": "com.Jackson.Heart2Heart",
+                        },
+                    },
+                    android: {
+                        priority: "high" as const,
+                    },
+                };
 
-            await Promise.all(taskPromises);
+                try {
+                    await admin.messaging().send(message);
+                    console.log(`Success: sent noti to ${userDoc.id}`);
+                } catch (error) {
+                    console.error(
+                        `Notification failed for user ${userDoc.id}:`,
+                        error
+                    );
 
-            console.log(
-                `Tasks updated for ${usersSnapshot.size} users`
-            );
+                    if (error instanceof Error) {
+                        if (
+                            "code" in error &&
+                            invalidTokenCodes.includes(error.code as string)
+                        ) {
+                            await userDoc.ref.update({
+                                fcmToken: admin.firestore.FieldValue.delete(),
+                            });
+                        }
+                    }
+                }
+            });
+
+            await Promise.all(notifications);
+            return null;
         } catch (error) {
-            console.error("Error managing tasks:", error);
-            throw error;
+            console.error("Error in scheduleDailyTask:", error);
+            return null;
+        }
+    });
+
+export const sendPartnerNotification = functions.https.onCall(
+    async (data, context) => {
+        // Ensure the request is authenticated
+        if (!context.auth) {
+            throw new functions.https.HttpsError(
+                "unauthenticated",
+                "The function must be called while authenticated."
+            );
+        }
+
+        try {
+            const message = {
+                token: data.token,
+                notification: {
+                    title: data.notification.title,
+                    body: data.notification.body,
+                },
+                data: data.data,
+                apns: {
+                    payload: {
+                        aps: {
+                            "content-available": 1,
+                            "mutable-content": 1,
+                            "sound": "default",
+                        },
+                    },
+                    headers: {
+                        "apns-priority": "10",
+                        "apns-topic": "com.Jackson.Heart2Heart",
+                    },
+                },
+                android: {
+                    priority: "high" as const,
+                },
+            };
+
+            try {
+                await admin.messaging().send(message);
+                console.log("Success: sent notification to recipient");
+                return {success: true};
+            } catch (error) {
+                console.error("Notification failed:", error);
+
+                if (error instanceof Error) {
+                    if (
+                        "code" in error &&
+                        invalidTokenCodes.includes(error.code as string)
+                    ) {
+                        throw new functions.https.HttpsError(
+                            "failed-precondition",
+                            "The recipient's device token is invalid"
+                        );
+                    }
+                }
+                throw new functions.https.HttpsError(
+                    "internal",
+                    "Error sending notification"
+                );
+            }
+        } catch (error) {
+            console.error("Error in sendPartnerNotification:", error);
+            if (error instanceof functions.https.HttpsError) {
+                throw error;
+            }
+            throw new functions.https.HttpsError(
+                "internal",
+                "Error sending notification"
+            );
         }
     }
 );

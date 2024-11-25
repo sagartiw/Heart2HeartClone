@@ -82,23 +82,33 @@ struct SleepMetrics: StorableMetric {
 // MARK: - HealthKitManager
 class HealthKitManager {
     private let healthStore = HKHealthStore()
-        private let firestoreManager: FirestoreManager
+    private let firestoreManager: FirestoreManager
     private let authManager: AuthenticationManager
-        
-        init(firestoreManager: FirestoreManager, authManager: AuthenticationManager) {
-            self.firestoreManager = firestoreManager
-            self.authManager = authManager
-        }
-        
-        // Helper property to safely get userId
-        private var userId: String? {
-            authManager.user?.uid
-        }
+    
+    init(firestoreManager: FirestoreManager, authManager: AuthenticationManager) {
+        self.firestoreManager = firestoreManager
+        self.authManager = authManager
+    }
+    
+    // Helper property to safely get userId
+    private var userId: String? {
+        authManager.user?.uid
+    }
     
     func checkAuthorizationStatus() async -> Bool {
         for type in healthTypes {
             let status = healthStore.authorizationStatus(for: type)
-            if status != .sharingAuthorized {
+            
+            switch status {
+            case .notDetermined:
+                return false
+            case .sharingDenied:
+                // This is OK for read-only access
+                continue
+            case .sharingAuthorized:
+                // This is OK for read-only access
+                continue
+            @unknown default:
                 return false
             }
         }
@@ -106,19 +116,50 @@ class HealthKitManager {
     }
     
     func requestAuthorization() async throws -> Bool {
-        // Check if HealthKit is available on this device
+        
         guard HKHealthStore.isHealthDataAvailable() else {
             throw HealthKitError.notAvailable
         }
         
         do {
             try await healthStore.requestAuthorization(toShare: [], read: healthTypes)
-            return await checkAuthorizationStatus()
+            
+            for type in healthTypes {
+                if let sampleType = type as? HKSampleType {
+                    try await enableBackgroundDelivery(for: sampleType)
+                }
+            }
+            
+            // Add detailed status checking for each type
+            for type in healthTypes {
+                let status = healthStore.authorizationStatus(for: type)
+            }
+            
+            let authStatus = await checkAuthorizationStatus()
+            
+            return authStatus
+            
         } catch {
+            print("❌ Healthkit Authorization failed with error: \(error)")
             throw HealthKitError.authorizationFailed(error)
         }
     }
 
+    private func enableBackgroundDelivery(for type: HKSampleType) async throws {
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            healthStore.enableBackgroundDelivery(for: type, frequency: .immediate) { success, error in
+                if let error = error {
+                    continuation.resume(throwing: error)
+                } else if success {
+                    continuation.resume()
+                } else {
+                    continuation.resume(throwing: NSError(domain: "HealthKit", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to enable background delivery"]))
+                }
+            }
+        }
+    }
+    
+    
     
     private let healthTypes: Set<HKObjectType> = Set([
         .heartRate, .heartRateVariabilitySDNN, .restingHeartRate,
@@ -127,7 +168,7 @@ class HealthKitManager {
         HKObjectType.categoryType(forIdentifier: .sleepAnalysis)!
     ])
     
-
+    
     // MARK: - Generic Data Fetching
     private func fetchData<T: HKSample>(
         type: HKSampleType,
@@ -154,12 +195,12 @@ class HealthKitManager {
     // MARK: - Metrics
     func getDailyMetric(_ metric: HealthMetric, for date: Date) async throws -> Double {
         guard let userId = userId else {
-                    throw HealthKitError.notAvailable // or create a new error type for authentication
-                }
+            throw HealthKitError.notAvailable // or create a new error type for authentication
+        }
         // First check Firestore if this metric should be cached
         if metric.shouldCache {
             if let cachedValue = try await firestoreManager.getHealthData(userId: userId, metric: metric, date: date) {
-
+                
                 return cachedValue
             }
         }
@@ -168,9 +209,9 @@ class HealthKitManager {
         
         // Store in Firestore if this metric should be cached
         if metric.shouldCache {
-
+            
             try await firestoreManager.storeHealthData(userId: userId, metric: metric, date: date, value: value)
-
+            
         }
         
         return value
@@ -182,7 +223,7 @@ class HealthKitManager {
         let end = calendar.date(byAdding: .day, value: 1, to: start)!
         
         let predicate = HKQuery.predicateForSamples(withStart: start, end: end)
-
+        
         // Choose statistics option based on metric type
         let options: HKStatisticsOptions
         switch metric.quantityType.identifier {
@@ -279,17 +320,17 @@ class HealthKitManager {
     // MARK: - Heart Rate Analysis
     func getTimeAboveHeartRatePercentage(date: Date, percentage: Double) async throws -> TimeInterval {
         guard let userId = userId else {
-                throw HealthKitError.notAvailable
-            }
-            
-            // First check Firestore cache
-            if let cachedValue = try await firestoreManager.getHealthData(
-                userId: userId,
-                metric: .elevatedHeartRateTime,
-                date: date
-            ) {
-                return cachedValue
-            }
+            throw HealthKitError.notAvailable
+        }
+        
+        // First check Firestore cache
+        if let cachedValue = try await firestoreManager.getHealthData(
+            userId: userId,
+            metric: .elevatedHeartRateTime,
+            date: date
+        ) {
+            return cachedValue
+        }
         
         let (start, end) = date.dayInterval
         
@@ -344,13 +385,13 @@ class HealthKitManager {
         }
         
         try await firestoreManager.storeComputedData(
-                userId: userId,
-                metric: .elevatedHeartRateTime,
-                date: date,
-                value: elevatedTimeTotal
-            )
+            userId: userId,
+            metric: .elevatedHeartRateTime,
+            date: date,
+            value: elevatedTimeTotal
+        )
         
-            return elevatedTimeTotal
+        return elevatedTimeTotal
     }
 }
 // MARK: - Convenience Methods

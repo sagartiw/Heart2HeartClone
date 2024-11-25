@@ -212,13 +212,13 @@ struct ComponentView: View {
             guard let currentUserId = authManager.user?.uid else { return }
             
             do {
-                let (_, userName) = try await firestoreManager.getUserData(userId: currentUserId)
+                let (_, userName) = try await firestoreManager.getPartnerData(userId: currentUserId)
                 await MainActor.run {
                     self.userName = userName ?? "User"
                 }
                 
                 if let partnerId = partnerId {
-                    let (_, partnerName) = try await firestoreManager.getUserData(userId: partnerId)
+                    let (_, partnerName) = try await firestoreManager.getPartnerData(userId: partnerId)
                     await MainActor.run {
                         self.partnerName = partnerName ?? "Partner"
                     }
@@ -235,7 +235,7 @@ struct ComponentView: View {
         }
         
         do {
-            let (partnerId, _) = try await firestoreManager.getUserData(userId: currentUserId)
+            let (partnerId, _) = try await firestoreManager.getPartnerData(userId: currentUserId)
             await MainActor.run {
                 self.partnerId = partnerId
             }
@@ -301,8 +301,11 @@ struct ComponentView: View {
         var scores: [Double] = []
         var latest: Double?
         
-        for i in 0..<days {
-            let date = calendar.date(byAdding: .day, value: -days + i, to: today)!
+        let currentHour = calendar.component(.hour, from: today)
+        let startIndex = currentHour >= 16 ? 0 : 1 // Start from today if after 4 PM, otherwise yesterday
+        
+        for i in startIndex..<(days + startIndex) {
+            let date = calendar.date(byAdding: .day, value: -i, to: today)!
             
             do {
                 let score: Double?
@@ -319,7 +322,9 @@ struct ComponentView: View {
                 
                 if let score = score {
                     scores.append(score)
-                    latest = score
+                    if i == startIndex {  // This will be either today or yesterday depending on time
+                        latest = score
+                    }
                 }
             } catch {
                 print("Error loading scores for date \(date): \(error)")

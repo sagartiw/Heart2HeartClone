@@ -41,6 +41,7 @@
 		C5D0D69F2CEE7C76001D53E8 /* FirebaseFunctions in Frameworks */ = {isa = PBXBuildFile; productRef = C5D0D69E2CEE7C76001D53E8 /* FirebaseFunctions */; };
 		C5D0D6A12CEE8838001D53E8 /* TimeZoneManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5D0D6A02CEE8838001D53E8 /* TimeZoneManager.swift */; };
 		C5D0D6A32CEE93EC001D53E8 /* AlertManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5D0D6A22CEE93EC001D53E8 /* AlertManager.swift */; };
+		C5D0D6A52CF12B86001D53E8 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = C5D0D6A42CF12B86001D53E8 /* FirebaseMessaging */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -86,6 +87,7 @@
 			files = (
 				C5D0D69B2CEE7C76001D53E8 /* FirebaseCore in Frameworks */,
 				C5D0D6992CEE7C76001D53E8 /* FirebaseAuth in Frameworks */,
+				C5D0D6A52CF12B86001D53E8 /* FirebaseMessaging in Frameworks */,
 				C5D0D69D2CEE7C76001D53E8 /* FirebaseFirestore in Frameworks */,
 				C5D0D69F2CEE7C76001D53E8 /* FirebaseFunctions in Frameworks */,
 			);
@@ -202,6 +204,7 @@
 				C5D0D69A2CEE7C76001D53E8 /* FirebaseCore */,
 				C5D0D69C2CEE7C76001D53E8 /* FirebaseFirestore */,
 				C5D0D69E2CEE7C76001D53E8 /* FirebaseFunctions */,
+				C5D0D6A42CF12B86001D53E8 /* FirebaseMessaging */,
 			);
 			productName = Heart2Heart;
 			productReference = C5D01CC42CEE52E5001D53E8 /* Heart2Heart.app */;
@@ -537,6 +540,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = C5D0D6972CEE7C76001D53E8 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseFunctions;
+		};
+		C5D0D6A42CF12B86001D53E8 /* FirebaseMessaging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C5D0D6972CEE7C76001D53E8 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseMessaging;
 		};
 /* End XCSwiftPackageProductDependency section */
 

@@ -4,19 +4,22 @@ import Foundation
 import FirebaseFirestore
 import FirebaseAuth
 import Combine
+import FirebaseFunctions
 
 
 class DailyTaskManager: ObservableObject {
-    private let db = Firestore.firestore()
     private let healthDataProcessor: HealthDataProcessor
     private let firestoreManager: FirestoreManager
     private let settingsManager: SettingsManager
-    private var listener: ListenerRegistration?
-    private var processingTask: Task<Void, Error>?
     
     @Published private(set) var isProcessing = false
     @Published private(set) var lastProcessedDate: Date?
     @Published private(set) var lastError: String?
+    
+    private var lastEarlyWindowAlert: Date?
+    private var lastLateWindowAlert: Date?
+    
+    
     
     init(healthDataProcessor: HealthDataProcessor, settingsManager: SettingsManager) {
         self.healthDataProcessor = healthDataProcessor
@@ -24,116 +27,122 @@ class DailyTaskManager: ObservableObject {
         self.settingsManager = settingsManager
     }
     
-    func startListening() {
-        stopListening()
-        
-        // Listen for tasks specific to the current user
-        guard let userId = Auth.auth().currentUser?.uid else {
-            lastError = "No authenticated user"
-            return
-        }
-        
-        listener = db.collection("dailyTasks")
-            .whereField("userId", isEqualTo: userId)
-            .whereField("status", isEqualTo: "pending")
-            .addSnapshotListener { [weak self] snapshot, error in
-                guard let self = self else { return }
-                
-                if let error = error {
-                    self.lastError = "Failed to listen for tasks: \(error.localizedDescription)"
-                    return
-                }
-                
-                guard let documents = snapshot?.documents else { return }
-                
-                // Process only the most recent task
-                if let latestTask = documents.first {
-                    self.processDailyTask(latestTask)
-                }
-            }
-        print("listening for \(userId)")
+    
+    private enum AuthError: Error {
+        case userNotAuthenticated
     }
     
-    private func processDailyTask(_ document: QueryDocumentSnapshot) {
-        guard !isProcessing else { return }
+    private var backgroundTask: UIBackgroundTaskIdentifier = .invalid
+    
+    private var processingTask: Task<Void, Error>?
+    
+    func handlePushNotification(userInfo: [AnyHashable: Any]) {
+        processingTask?.cancel()
         
         processingTask = Task { @MainActor in
             do {
                 isProcessing = true
-
                 
-                let taskData = document.data()
-                let timestamp = taskData["timestamp"] as? Timestamp ?? Timestamp(date: Date())
-                let taskDate = timestamp.dateValue()
-                
-                let score = try await healthDataProcessor.calculateBandwidthScore(for: taskDate)
-                if let userId = taskData["userId"] as? String {
-                    // Store the score
-
-                    try await firestoreManager.storeComputedData(
-                        userId: userId,
-                        metric: .bandwidth,
-                        date: taskDate,
-                        value: score
-                    )
-                    // Analyze the score
-                    try await analyzeScoreIfNeeded(userId: userId,
-                                                 currentScore: score,
-                                                 date: taskDate)
-                    
-                    // Update task status
-                    try await document.reference.updateData([
-                        "status": "completed",
-                        "score": score,
-                        "processedAt": FieldValue.serverTimestamp()
-                    ])
-                    
-                    lastProcessedDate = taskDate
-                    lastError = nil
-                } else {
-                    throw FirestoreError.invalidUserId
+                // Ensure we have enough background time
+                let backgroundTask = UIApplication.shared.beginBackgroundTask {
+                    self.processingTask?.cancel()
                 }
                 
+                defer {
+                    UIApplication.shared.endBackgroundTask(backgroundTask)
+                }
+                
+                guard let userId = Auth.auth().currentUser?.uid else {
+                    throw AuthError.userNotAuthenticated
+                }
+                
+                let date = Date()
+                let score = try await healthDataProcessor.calculateBandwidthScore(for: date)
+                
+                try await firestoreManager.storeComputedData(
+                    userId: userId,
+                    metric: .bandwidth,
+                    date: date,
+                    value: score
+                )
+                
+                try await analyzeScoreIfNeeded(userId: userId, currentScore: score, date: date)
+                
+                lastProcessedDate = date
+                lastError = nil
             } catch {
                 lastError = "Failed to process daily task: \(error.localizedDescription)"
-                try? await document.reference.updateData([
-                    "status": "failed",
-                    "error": error.localizedDescription,
-                    "processedAt": FieldValue.serverTimestamp()
-                ])
             }
             
-            await MainActor.run {
-                self.isProcessing = false
-            }
+            isProcessing = false
         }
     }
     
-    private func isWithinTimeWindow() -> Bool {
-        let now = Date()
-        let calendar = Calendar.current
-        let hour = calendar.component(.hour, from: now)
-        let minute = calendar.component(.minute, from: now)
-        let currentTime = hour * 60 + minute
-        
-        let earlyWindowStart = 16 * 60  // 4:00 PM
-        let earlyWindowEnd = 17 * 60    // 5:00 PM
-        let lateWindowStart = 18 * 60   // 6:00 PM
-        let lateWindowEnd = 19 * 60     // 7:00 PM
-        
-        return (currentTime >= earlyWindowStart && currentTime <= earlyWindowEnd) ||
-               (currentTime >= lateWindowStart && currentTime <= lateWindowEnd)
+    
+    private func endBackgroundTask() {
+        if backgroundTask != .invalid {
+            UIApplication.shared.endBackgroundTask(backgroundTask)
+            backgroundTask = .invalid
+        }
     }
     
+    
+    private func isWithinTimeWindow() -> (inWindow: Bool, windowType: TimeWindow?) {
+            let now = Date()
+            let calendar = Calendar.current
+            let hour = calendar.component(.hour, from: now)
+            let minute = calendar.component(.minute, from: now)
+            let currentTime = hour * 60 + minute
+            
+            let earlyWindowStart = 16 * 60  // 4:00 PM
+            let earlyWindowEnd = 17 * 60    // 5:00 PM
+            let lateWindowStart = 18 * 60   // 6:00 PM
+            let lateWindowEnd = 19 * 60     // 7:00 PM
+            
+            if currentTime >= earlyWindowStart && currentTime <= earlyWindowEnd {
+                return (true, .early)
+            } else if currentTime >= lateWindowStart && currentTime <= lateWindowEnd {
+                return (true, .late)
+            }
+            return (false, nil)
+        }
+        
+        private enum TimeWindow {
+            case early
+            case late
+        }
+        
+        private func canSendAlert(for window: TimeWindow) -> Bool {
+            let calendar = Calendar.current
+            let now = Date()
+            
+            switch window {
+            case .early:
+                if let lastAlert = lastEarlyWindowAlert,
+                   calendar.isDate(lastAlert, inSameDayAs: now) {
+                    return false
+                }
+            case .late:
+                if let lastAlert = lastLateWindowAlert,
+                   calendar.isDate(lastAlert, inSameDayAs: now) {
+                    return false
+                }
+            }
+            return true
+        }
+    
     private func analyzeScoreIfNeeded(userId: String, currentScore: Double, date: Date) async throws {
-        guard isWithinTimeWindow() else { return }
+        let windowStatus = isWithinTimeWindow()
+                guard windowStatus.inWindow,
+                      let windowType = windowStatus.windowType,
+                      canSendAlert(for: windowType) else { return }
         
         // Fetch historical scores
         let calendar = Calendar.current
         let endDate = date
         let startDate = calendar.date(byAdding: .day,
-                                    value: -settingsManager.settings.averagingPeriodDays,
-                                    to: endDate) ?? endDate
+                                      value: -settingsManager.settings.averagingPeriodDays,
+                                      to: endDate) ?? endDate
         
         var historicalScores: [Double] = []
         var currentDate = startDate
@@ -150,13 +159,21 @@ class DailyTaskManager: ObservableObject {
         
         // Calculate percentile of current score
         let percentile = calculatePercentile(currentScore: currentScore,
-                                          historicalScores: historicalScores)
+                                             historicalScores: historicalScores)
         
         // If score is below threshold, trigger action
         let threshold = 0.2
-        if percentile < threshold {
-            try await handleLowScore(userId: userId, score: currentScore, percentile: percentile)
-        }
+                if percentile <= threshold {
+                    try await handleLowScore(userId: userId, score: currentScore, percentile: percentile)
+                    
+                    // Update the last alert time for the current window
+                    switch windowType {
+                    case .early:
+                        lastEarlyWindowAlert = date
+                    case .late:
+                        lastLateWindowAlert = date
+                    }
+                }
     }
     
     private func calculatePercentile(currentScore: Double, historicalScores: [Double]) -> Double {
@@ -165,54 +182,41 @@ class DailyTaskManager: ObservableObject {
         return Double(position) / Double(sortedScores.count)
     }
     
-    // In DailyTaskManager.swift
     private func handleLowScore(userId: String, score: Double, percentile: Double) async throws {
-        // Get the paired user's info
-        let userDoc = try await db.collection("users").document(userId).getDocument()
-        guard let pairedUserId = userDoc.data()?["pairedWith"] as? String,
-              let userName = userDoc.data()?["name"] as? String else {
+        // Get partner data
+        let (partnerId, partnerName) = try await firestoreManager.getPartnerData(userId: userId)
+        
+        guard let partnerId = partnerId else {
+            print("No partner found for user")
             return
         }
-
-        // Create alert data
-        let alertData: [String: Any] = [
-            "type": "lowBandwidthAlert",
-            "fromUserId": userId,
-            "fromUserName": userName,
-            "score": score,
-            "percentile": percentile,
-            "timestamp": FieldValue.serverTimestamp(),
-            "status": "unread"
-        ]
-
-        // Store alert in Firestore
-        try await db.collection("users")
-            .document(pairedUserId)
-            .collection("alerts")
-            .addDocument(data: alertData)
-
-        // Send notification
-        let notificationContent = UNMutableNotificationContent()
-        notificationContent.title = "Bandwidth Alert"
-        notificationContent.body = "Today, \(userName)'s Bandwidth score is in the lowest 20% of historical data."
-        notificationContent.sound = .default
-
-        let request = UNNotificationRequest(
-            identifier: UUID().uuidString,
-            content: notificationContent,
-            trigger: nil
-        )
-
-        try await UNUserNotificationCenter.current().add(request)
-    }
-    
-    func stopListening() {
-        listener?.remove()
-        listener = nil
-        processingTask?.cancel()
-    }
         
-    deinit {
-        stopListening()
-    }
-}
+        // Get partner's FCM token from Firestore
+        let partnerDoc = try await Firestore.firestore()
+            .collection("users")
+            .document(partnerId)
+            .getDocument()
+        
+        guard let partnerToken = partnerDoc.data()?["fcmToken"] as? String else {
+            print("No FCM token found for partner")
+            return
+        }
+        
+        // Create the notification message
+        let message: [String: Any] = [
+            "notification": [
+                "title": "Partner Alert",
+                "body": "Your partner might need some support today, there bandwidth is low."
+            ],
+            "data": [
+                "type": "partnerAlert",
+                "score": String(score),
+                "percentile": String(percentile)
+            ],
+            "token": partnerToken
+        ]
+        
+        // Send the notification using a Cloud Function
+        let functions = Functions.functions()
+        try await functions.httpsCallable("sendPartnerNotification").call(message)
+    }}
