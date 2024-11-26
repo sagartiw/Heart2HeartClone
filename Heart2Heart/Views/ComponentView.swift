@@ -35,6 +35,22 @@ struct ComponentView: View {
     
     @State private var userName: String = ""
     @State private var partnerName: String = ""
+    
+    private var shouldInvertMetric: Bool {
+        switch selectedMetric {
+        case .healthMetric(let metric):
+            switch metric {
+            case .restingHeartRate:
+                return true
+            case .elevatedHeartRateTime:
+                return true
+            default:
+                return false
+            }
+        case .bandwidthScore:
+            return false
+        }
+    }
         
     var body: some View {
         NavigationView {
@@ -55,7 +71,7 @@ struct ComponentView: View {
                                 value: userCurrentScore,
                                 minValue: userMinScore,
                                 maxValue: userMaxScore,
-                                isInverted: false,
+                                isInverted: shouldInvertMetric,
                                 isEmpty: false,
                                 isGray: false
                             )
@@ -75,7 +91,7 @@ struct ComponentView: View {
                                 value: userAverageScore,
                                 minValue: userMinScore,
                                 maxValue: userMaxScore,
-                                isInverted: false,
+                                isInverted: shouldInvertMetric,
                                 isEmpty: false,
                                 isGray: true
                             )
@@ -103,7 +119,7 @@ struct ComponentView: View {
                                     value: partnerCurrentScore,
                                     minValue: partnerMinScore,
                                     maxValue: partnerMaxScore,
-                                    isInverted: false,
+                                    isInverted: shouldInvertMetric,
                                     isEmpty: partnerId == nil,
                                     isGray: false
                                 )
@@ -122,7 +138,7 @@ struct ComponentView: View {
                                     value: partnerAverageScore,
                                     minValue: partnerMinScore,
                                     maxValue: partnerMaxScore,
-                                    isInverted: false,
+                                    isInverted: shouldInvertMetric,
                                     isEmpty: partnerId == nil,
                                     isGray: true
                                 )

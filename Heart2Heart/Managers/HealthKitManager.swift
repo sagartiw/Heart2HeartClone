@@ -144,7 +144,7 @@ class HealthKitManager {
             throw HealthKitError.authorizationFailed(error)
         }
     }
-
+    
     private func enableBackgroundDelivery(for type: HKSampleType) async throws {
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             healthStore.enableBackgroundDelivery(for: type, frequency: .immediate) { success, error in
@@ -195,24 +195,24 @@ class HealthKitManager {
     // MARK: - Metrics
     func getDailyMetric(_ metric: HealthMetric, for date: Date) async throws -> Double {
         guard let userId = userId else {
-            throw HealthKitError.notAvailable // or create a new error type for authentication
+            throw HealthKitError.notAvailable
         }
-        // First check Firestore if this metric should be cached
-        if metric.shouldCache {
+        
+        // Skip cache if the date is today
+        let isToday = Calendar.current.isDateInToday(date)
+        
+        // Check Firestore only if metric should be cached AND it's not today
+        if metric.shouldCache && !isToday {
             if let cachedValue = try await firestoreManager.getHealthData(userId: userId, metric: metric, date: date) {
-                
                 return cachedValue
             }
         }
-        // If not in Firestore, get from HealthKit
+        
+        // Get from HealthKit
         let value = try await fetchFromHealthKit(metric, for: date)
         
-        // Store in Firestore if this metric should be cached
-        if metric.shouldCache {
-            
-            try await firestoreManager.storeHealthData(userId: userId, metric: metric, date: date, value: value)
-            
-        }
+        
+        try await firestoreManager.storeHealthData(userId: userId, metric: metric, date: date, value: value)
         
         return value
     }
@@ -282,9 +282,14 @@ class HealthKitManager {
         guard let userId = userId else {
             throw HealthKitError.notAvailable
         }
-        // First check Firestore cache
-        if let cachedMetrics = try await firestoreManager.getSleepMetrics(userId: userId, date: date) {
-            return cachedMetrics
+        
+        let isToday = Calendar.current.isDateInToday(date)
+        
+        // Check Firestore cache only if it's not today
+        if !isToday {
+            if let cachedMetrics = try await firestoreManager.getSleepMetrics(userId: userId, date: date) {
+                return cachedMetrics
+            }
         }
         
         // If not cached, fetch from HealthKit
@@ -322,14 +327,18 @@ class HealthKitManager {
         guard let userId = userId else {
             throw HealthKitError.notAvailable
         }
+        let isToday = Calendar.current.isDateInToday(date)
         
-        // First check Firestore cache
-        if let cachedValue = try await firestoreManager.getHealthData(
-            userId: userId,
-            metric: .elevatedHeartRateTime,
-            date: date
-        ) {
-            return cachedValue
+        // Check Firestore cache only if it's not today
+        if !isToday {
+            // First check Firestore cache
+            if let cachedValue = try await firestoreManager.getComputedData(
+                userId: userId,
+                metric: .elevatedHeartRateTime,
+                date: date
+            ) {
+                return cachedValue
+            }
         }
         
         let (start, end) = date.dayInterval

@@ -151,8 +151,14 @@ extension HealthMetric {
             return "activeEnergy"
         case .exerciseTime:
             return "exerciseMinutes"
-        default:
-            return ""
+        case .steps:
+            return "steps"
+        case .elevatedHeartRateTime:
+            return "elevatedHeartRateTime"
+        case .heartRate:
+            return "heartRate"
+        case .hrv:
+            return "hrv"
         }
     }
     
