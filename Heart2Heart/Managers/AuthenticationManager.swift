@@ -87,6 +87,7 @@ class AuthenticationManager: ObservableObject {
                 .document(result.user.uid)
                 .updateData(["fcmToken": fcmToken])
         }
+        let key = "hasCompletedOnboarding_\(result.user.uid)"
         self.isOnboarding = !UserDefaults.standard.bool(forKey: key)
         self.user = result.user
     }
