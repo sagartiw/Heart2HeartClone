@@ -13,12 +13,16 @@ struct OnboardingView: View {
     
     var body: some View {
         ZStack {
-            Color(red: 0.141, green: 0.141, blue: 0.141)
-                .ignoresSafeArea()
+            LinearGradient(
+                gradient: Gradient(colors: [
+                    Color(red: 0.10, green: 0.08, blue: 0.14),
+                    Color(red: 0.22, green: 0.16, blue: 0.31)
+                ]), startPoint: .init(x: 0, y: 0), endPoint: .init(x: 1, y: 1)
+            ).ignoresSafeArea()
             
             VStack{
                 
-                Image("Icon")
+                Image("Logo")
                     .resizable() 
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 100, height: 100)
@@ -45,7 +49,7 @@ struct OnboardingView: View {
             Text("Stay in touch")
                 .font(.custom("KulimPark-SemiBold", size: 32))
             
-            Text("To make the most of Heart 2 Heart, enable notifications to recieve updates about you partner's emotional wellbeing")
+            Text("To get the most out of Heart2Heart, enable notifications and receive updates about your partner's emotional well-being")
                 .multilineTextAlignment(.center)
                 .padding()
             
@@ -60,7 +64,7 @@ struct OnboardingView: View {
             Button("Skip") {
                 currentStep += 1
             }
-            .foregroundColor(.black)
+            .foregroundColor(.gray)
             .cornerRadius(8)
         }
         .padding()

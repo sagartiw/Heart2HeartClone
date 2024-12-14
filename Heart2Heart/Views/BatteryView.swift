@@ -8,7 +8,39 @@ struct BatteryView: View {
     let averageValue: Double?  // Make this optional
     let isEmpty: Bool
     
-    private let fillRatio: CGFloat = 0.68
+    private var batteryImageName: String {
+        let score = Int(value)
+        
+        switch score {
+        case ...0:
+            return "EmptyBattery"
+        case 1...20:
+            return "BatteryLevel1"
+        case 21...40:
+            return "BatteryLevel2"
+        case 41...60:
+            return "BatteryLevel3"
+        case 61...80:
+            return "BatteryLevel4"
+        case 81...100:
+            return "BatteryLevel5"
+        default:
+            return "EmptyBattery"
+        }
+        
+    }
+    
+    var body: some View {
+        GeometryReader { geometry in
+            Image(batteryImageName)
+                .resizable()
+                .scaledToFit()
+                .frame(width: geometry.size.width, height: geometry.size.height)
+        }
+    }
+}
+    
+    /*private let fillRatio: CGFloat = 0.68
     private let widthToHeightRatio: CGFloat = 0.343
     
     private var normalizedValue: CGFloat {
@@ -187,4 +219,4 @@ private struct BatteryFill: View {
                 .offset(y: ellipseHeight/2)
         }
     }
-}
+}*/

@@ -42,14 +42,22 @@ struct HomeView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                Color(red: 0.141, green: 0.141, blue: 0.141)
-                    .ignoresSafeArea()
+                LinearGradient(
+                    gradient: Gradient(colors: [
+                        Color(red: 0.10, green: 0.08, blue: 0.14),
+                        Color(red: 0.22, green: 0.16, blue: 0.31)
+                    ]), startPoint: .init(x: 0, y: 0), endPoint: .init(x: 1, y: 1)
+                ).ignoresSafeArea()
+                
                 
                 VStack {
+                    Text("Welcome back, \(authManager.user?.displayName ?? "we missed you")!") // possibly add messages depending on last date user logged in
+                        .font(.system(size: 28)) // at size 28, we support up to 10 characters in one line, if it's all I's then more
+                    //Text("the current users stats are \(userStats.latest.normalized(min: userStats.min, max: userStats.max))")
                     // Batteries HStack
                     HStack(spacing: 40) {
                         BatteryView(
-                            value: userStats.latest,
+                            value: userStats.latest.normalized(min: userStats.min, max: userStats.max),
                             minValue: userStats.min,
                             maxValue: userStats.max,
                             isInverted: false,
@@ -59,7 +67,7 @@ struct HomeView: View {
                         .frame(height: 400)
                         
                         BatteryView(
-                            value: partnerId != nil ? partnerStats.latest : 0,
+                            value: partnerId != nil ? partnerStats.latest.normalized(min: partnerStats.min, max: partnerStats.max) : 0,
                             minValue: partnerId != nil ? partnerStats.min : 0,
                             maxValue: partnerId != nil ? partnerStats.max : 100,
                             isInverted: false,
@@ -128,7 +136,7 @@ struct HomeView: View {
                                     Text(partnerName)
                                 } else {
                                     Button("Invite Partner") {
-                                        showPartnerInvitation = true
+                                        showPartnerInvitation = true // This doesn't do anything?
                                     }
                                     .buttonStyle(.borderedProminent)
                                 }
@@ -155,7 +163,7 @@ struct HomeView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Image("Icon") 
+                    Image("Logo")
                         .resizable()
                         .scaledToFit()
                         .frame(height: 30)

@@ -15,26 +15,20 @@ struct LoginView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                Color(red: 0.141, green: 0.141, blue: 0.141)
-                    .ignoresSafeArea()
+                LinearGradient(
+                    gradient: Gradient(colors: [
+                        Color(red: 0.10, green: 0.08, blue: 0.14),
+                        Color(red: 0.22, green: 0.16, blue: 0.31)
+                    ]), startPoint: .init(x: 0, y: 0), endPoint: .init(x: 1, y: 1)
+                ).ignoresSafeArea()
                 
                 VStack(spacing: 20) {
-                    Image("Icon")
-                        .resizable() 
+                    Image("Logo")
+                        .resizable()
                         .aspectRatio(contentMode: .fit)
-                        .frame(width: 200, height: 200)
+                        .frame(width: 150, height: 150)
                     
-                    HStack {
-                        VStack(spacing: 10) {
-                            Text("Heart")
-                                .font(.custom("KulimPark-SemiBold", size: 32))
- 
-                            Text("2")
-                                .font(.custom("KulimPark-SemiBold", size: 32))
-                            Text("Heart")
-                                .font(.custom("KulimPark-SemiBold", size: 32))
-                        }
-                    }
+                    Image("Title").resizable().aspectRatio(contentMode: .fit).frame(width: 300)
                     
                     Spacer()
                             .frame(height: 20)
