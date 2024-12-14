@@ -50,12 +50,13 @@ struct MainTabView: View {
                 }
                 .tag(1)
 
-            ComponentView()
+            // Un-commment to add to later build version
+            /*ComponentView()
                 .tabItem {
                     Image(systemName: selectedTab == 2 ?  "circle.fill" : "circle")
                         .environment(\.symbolVariants, .none)
                 }
-                .tag(2)
+                .tag(2)*/
         }
         .tint(.gray)
         .font(.custom("KulimPark-SemiBold", size: 18))

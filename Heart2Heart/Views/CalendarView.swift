@@ -25,8 +25,12 @@ struct CalendarView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                Color(red: 0.141, green: 0.141, blue: 0.141)
-                    .ignoresSafeArea()
+                LinearGradient(
+                    gradient: Gradient(colors: [
+                        Color(red: 0.10, green: 0.08, blue: 0.14),
+                        Color(red: 0.22, green: 0.16, blue: 0.31)
+                    ]), startPoint: .init(x: 0, y: 0), endPoint: .init(x: 1, y: 1)
+                ).ignoresSafeArea()
                 
                 VStack(spacing: 0) {
                     if let error = errorMessage {
@@ -102,7 +106,7 @@ struct CalendarView: View {
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .navigationBarLeading) {
-                        Image("Icon")
+                        Image("Logo")
                             .resizable()
                             .scaledToFit()
                             .frame(height: 30)
@@ -300,7 +304,7 @@ struct DayCell: View {
                 Circle()
                     .fill(Color.gray.opacity(0.3))
                 Text("\(Calendar.current.component(.day, from: date))")
-                    .font(.custom("KulimPark-SemiBold", size: 14))
+                    .font(.custom("KulimPark-SemiBold", size: 16))
             } else {
                 if value != 0 {
                     Circle()
@@ -326,12 +330,18 @@ struct DayCell: View {
                 
                 VStack {
                     Text("\(Calendar.current.component(.day, from: date))")
+<<<<<<< Updated upstream
                         .font(.custom("KulimPark-SemiBold", size: 8))
                     if value != 0 {
+=======
+                        .font(.custom("KulimPark-SemiBold", size: 16))
+                    // Re-introduce later perhaps if we want to add the score underneath the date within the circles on the calendar
+                    /*if value > 0 {
+>>>>>>> Stashed changes
                         Text(formatValue())
-                            .font(.custom("KulimPark-SemiBold", size: 8))
+                            .font(.custom("KulimPark-SemiBold", size: 16))
                             .foregroundColor(.gray)
-                    }
+                    }*/
                 }
             }
         }

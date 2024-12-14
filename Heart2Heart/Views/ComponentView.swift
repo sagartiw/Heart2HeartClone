@@ -55,8 +55,13 @@ struct ComponentView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                Color(red: 0.141, green: 0.141, blue: 0.141)
-                    .ignoresSafeArea()
+                LinearGradient(
+                    gradient: Gradient(colors: [
+                        Color(red: 0.10, green: 0.08, blue: 0.14),
+                        Color(red: 0.22, green: 0.16, blue: 0.31)
+                    ]), startPoint: .init(x: 0, y: 0), endPoint: .init(x: 1, y: 1)
+                ).ignoresSafeArea()
+                
                 VStack(spacing: 5) {
                     // User section
                     Text(userName)
@@ -67,13 +72,19 @@ struct ComponentView: View {
                     HStack(spacing: 50) {
                         // Today Battery
                         VStack(spacing: 0) {
-                            SmallBatteryView(
+                            BatteryView(
                                 value: userCurrentScore,
                                 minValue: userMinScore,
                                 maxValue: userMaxScore,
+<<<<<<< Updated upstream
                                 isInverted: shouldInvertMetric,
                                 isEmpty: false,
                                 isGray: false
+=======
+                                isInverted: false,
+                                averageValue: 0,
+                                isEmpty: false
+>>>>>>> Stashed changes
                             )
                             .frame(height: 250)
                             .padding(.bottom, 2)
@@ -87,13 +98,19 @@ struct ComponentView: View {
                         
                         // Average Battery
                         VStack(spacing: 0) {
-                            SmallBatteryView(
+                            BatteryView(
                                 value: userAverageScore,
                                 minValue: userMinScore,
                                 maxValue: userMaxScore,
+<<<<<<< Updated upstream
                                 isInverted: shouldInvertMetric,
                                 isEmpty: false,
                                 isGray: true
+=======
+                                isInverted: false,
+                                averageValue: 0,
+                                isEmpty: false
+>>>>>>> Stashed changes
                             )
                             .frame(height: 250)
                             .padding(.bottom, 2)
@@ -115,13 +132,19 @@ struct ComponentView: View {
                         
                         HStack(spacing: 50) {
                             VStack(spacing: 0) {
-                                SmallBatteryView(
+                                BatteryView(
                                     value: partnerCurrentScore,
                                     minValue: partnerMinScore,
                                     maxValue: partnerMaxScore,
+<<<<<<< Updated upstream
                                     isInverted: shouldInvertMetric,
                                     isEmpty: partnerId == nil,
                                     isGray: false
+=======
+                                    isInverted: false,
+                                    averageValue: 0,
+                                    isEmpty: partnerId == nil
+>>>>>>> Stashed changes
                                 )
                                 .frame(height: 250)
                                 .padding(.bottom, 2)
@@ -134,13 +157,19 @@ struct ComponentView: View {
                             }
                             
                             VStack(spacing: 0) {
-                                SmallBatteryView(
+                                BatteryView(
                                     value: partnerAverageScore,
                                     minValue: partnerMinScore,
                                     maxValue: partnerMaxScore,
+<<<<<<< Updated upstream
                                     isInverted: shouldInvertMetric,
                                     isEmpty: partnerId == nil,
                                     isGray: true
+=======
+                                    isInverted: false,
+                                    averageValue: 0,
+                                    isEmpty: partnerId == nil
+>>>>>>> Stashed changes
                                 )
                                 .frame(height: 250)
                                 .padding(.bottom, 2)
@@ -166,7 +195,7 @@ struct ComponentView: View {
                         .navigationBarTitleDisplayMode(.inline)
                         .toolbar {
                             ToolbarItem(placement: .navigationBarLeading) {
-                                Image("Icon")
+                                Image("Logo")
                                     .resizable()
                                     .scaledToFit()
                                     .frame(height: 30)

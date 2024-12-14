@@ -42,10 +42,18 @@ struct HomeView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                Color(red: 0.141, green: 0.141, blue: 0.141)
-                    .ignoresSafeArea()
+                LinearGradient(
+                    gradient: Gradient(colors: [
+                        Color(red: 0.10, green: 0.08, blue: 0.14),
+                        Color(red: 0.22, green: 0.16, blue: 0.31)
+                    ]), startPoint: .init(x: 0, y: 0), endPoint: .init(x: 1, y: 1)
+                ).ignoresSafeArea()
+                
                 
                 VStack {
+                    Text("Welcome back, \(authManager.user?.displayName ?? "we missed you")!")
+                        .font(.system(size: 28)) // at size 28, we support up to 10 characters in one line, if it's all I's then more
+                    
                     // Batteries HStack
                     HStack(spacing: 40) {
                         BatteryView(
@@ -128,7 +136,7 @@ struct HomeView: View {
                                     Text(partnerName)
                                 } else {
                                     Button("Invite Partner") {
-                                        showPartnerInvitation = true
+                                        showPartnerInvitation = true // This doesn't do anything?
                                     }
                                     .buttonStyle(.borderedProminent)
                                 }
@@ -155,7 +163,7 @@ struct HomeView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Image("Icon") 
+                    Image("Logo")
                         .resizable()
                         .scaledToFit()
                         .frame(height: 30)
