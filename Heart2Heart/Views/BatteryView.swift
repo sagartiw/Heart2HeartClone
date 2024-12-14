@@ -8,9 +8,6 @@ struct BatteryView: View {
     let averageValue: Double?  // Make this optional
     let isEmpty: Bool
     
-<<<<<<< Updated upstream
-    private let fillRatio: CGFloat = 0.68
-=======
     private var batteryImageName: String {
         let score = Int(value)
         
@@ -41,9 +38,9 @@ struct BatteryView: View {
                 .frame(width: geometry.size.width, height: geometry.size.height)
         }
     }
+}
     
     /*private let fillRatio: CGFloat = 0.68
->>>>>>> Stashed changes
     private let widthToHeightRatio: CGFloat = 0.343
     
     private var normalizedValue: CGFloat {
@@ -98,13 +95,8 @@ struct BatteryView: View {
                     }
                 }
             }
-<<<<<<< Updated upstream
         }
         .aspectRatio(widthToHeightRatio, contentMode: .fit)
-=======
-            .aspectRatio(widthToHeightRatio, contentMode: .fit)
-        }*/
->>>>>>> Stashed changes
     }
 }
 
@@ -227,4 +219,4 @@ private struct BatteryFill: View {
                 .offset(y: ellipseHeight/2)
         }
     }
-}
+}*/
