@@ -330,14 +330,9 @@ struct DayCell: View {
                 
                 VStack {
                     Text("\(Calendar.current.component(.day, from: date))")
-<<<<<<< Updated upstream
-                        .font(.custom("KulimPark-SemiBold", size: 8))
-                    if value != 0 {
-=======
                         .font(.custom("KulimPark-SemiBold", size: 16))
                     // Re-introduce later perhaps if we want to add the score underneath the date within the circles on the calendar
-                    /*if value > 0 {
->>>>>>> Stashed changes
+                    /*if value != 0 {
                         Text(formatValue())
                             .font(.custom("KulimPark-SemiBold", size: 16))
                             .foregroundColor(.gray)
