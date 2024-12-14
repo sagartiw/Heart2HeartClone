@@ -76,15 +76,9 @@ struct ComponentView: View {
                                 value: userCurrentScore,
                                 minValue: userMinScore,
                                 maxValue: userMaxScore,
-<<<<<<< Updated upstream
                                 isInverted: shouldInvertMetric,
-                                isEmpty: false,
-                                isGray: false
-=======
-                                isInverted: false,
-                                averageValue: 0,
+                                averageValue: 0,  // optional so maybe remove in future
                                 isEmpty: false
->>>>>>> Stashed changes
                             )
                             .frame(height: 250)
                             .padding(.bottom, 2)
@@ -102,15 +96,9 @@ struct ComponentView: View {
                                 value: userAverageScore,
                                 minValue: userMinScore,
                                 maxValue: userMaxScore,
-<<<<<<< Updated upstream
                                 isInverted: shouldInvertMetric,
-                                isEmpty: false,
-                                isGray: true
-=======
-                                isInverted: false,
-                                averageValue: 0,
+                                averageValue: 0, // optional so maybe remove in future
                                 isEmpty: false
->>>>>>> Stashed changes
                             )
                             .frame(height: 250)
                             .padding(.bottom, 2)
@@ -136,15 +124,9 @@ struct ComponentView: View {
                                     value: partnerCurrentScore,
                                     minValue: partnerMinScore,
                                     maxValue: partnerMaxScore,
-<<<<<<< Updated upstream
                                     isInverted: shouldInvertMetric,
-                                    isEmpty: partnerId == nil,
-                                    isGray: false
-=======
-                                    isInverted: false,
                                     averageValue: 0,
                                     isEmpty: partnerId == nil
->>>>>>> Stashed changes
                                 )
                                 .frame(height: 250)
                                 .padding(.bottom, 2)
@@ -161,15 +143,9 @@ struct ComponentView: View {
                                     value: partnerAverageScore,
                                     minValue: partnerMinScore,
                                     maxValue: partnerMaxScore,
-<<<<<<< Updated upstream
                                     isInverted: shouldInvertMetric,
-                                    isEmpty: partnerId == nil,
-                                    isGray: true
-=======
-                                    isInverted: false,
                                     averageValue: 0,
                                     isEmpty: partnerId == nil
->>>>>>> Stashed changes
                                 )
                                 .frame(height: 250)
                                 .padding(.bottom, 2)
